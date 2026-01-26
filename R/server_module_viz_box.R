@@ -19,15 +19,15 @@ server_module_viz_box <- function(id, assays_to_process) {
             features_list <- lapply(seq_along(assays_to_process()), function(i) {
                 rowData(assays_to_process()[[i]])[, input$feature_type_column]
             })
-            features_vector <- unlist(features_list)
-            unique(features_vector)
+            features_vector <- as.character(unlist(features_list))
+            sort(unique(features_vector[!is.na(features_vector) & nzchar(features_vector)]))
         })
 
         observe({
-            req(unique_features())
+            choices <- unique_features()
             updateSelectizeInput(session,
                 "feature",
-                choices = unique_features(),
+                choices = choices,
                 server = TRUE
             )
         })
@@ -55,9 +55,9 @@ server_module_viz_box <- function(id, assays_to_process) {
             req(input$feature_type_column)
 
             summarize_assays_to_df(
-            qfeatures = assays_to_process(),
-            sample_column = input$sample_type_column,
-            feature_column = input$feature_type_column
+                qfeatures = assays_to_process(),
+                sample_column = input$sample_type_column,
+                feature_column = input$feature_type_column
             )
         })
 

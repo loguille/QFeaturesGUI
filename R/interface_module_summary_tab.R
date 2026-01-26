@@ -16,15 +16,24 @@ interface_module_summary_tab <- function(id) {
         solidHeader = TRUE,
         collapsible = TRUE,
         width = 12,
-        DT::dataTableOutput(NS(id, "qfeatures_dt")),
-        DT::dataTableOutput(NS(id, "assay_table")),
+        with_output_waiter(DT::dataTableOutput(NS(id, "qfeatures_dt")),
+            html = waiter::spin_6(),
+            color = "transparent"
+        ),
+        with_output_waiter(DT::dataTableOutput(NS(id, "assay_table")),
+            html = waiter::spin_6(),
+            color = "transparent"
+        ),
         box(
             title = "Visual Summary",
             status = "primary",
             solidHeader = FALSE,
             collapsible = TRUE,
             width = 12,
-            plotlyOutput(NS(id, "qfeatures_plot"))
+            with_output_waiter(plotlyOutput(NS(id, "qfeatures_plot")),
+                html = waiter::spin_6(),
+                color = "transparent"
+            )
         ),
         downloadButton(
             outputId = NS(id, "download_qfeatures"),

@@ -6,70 +6,88 @@
 #' @return A Shiny module UI function
 #' @rdname INTERNAL_server_module_workflow_config
 #' @keywords internal
+#' @importFrom shiny moduleServer observeEvent reactiveVal showModal modalDialog
+#' @importFrom shiny modalButton actionButton removeModal tagList p
+#' @importFrom shinyalert shinyalert
 #'
-#' @importFrom shiny moduleServer observeEvent renderUI selectInput reactiveVal reactiveValues reactiveValuesToList reactive
-#' @importFrom htmltools div
-#'
-
+#' @keywords internal
 server_module_workflow_config <- function(id) {
     moduleServer(id, function(input, output, session) {
-        n_steps <- reactiveVal(0)
-        steps <- reactiveValues()
+        session$sendCustomMessage(
+            "initWorkflowSortable",
+            list(
+                palette  = session$ns("palette"),
+                workflow = session$ns("workflow"),
+                input    = session$ns("workflow_list")
+            )
+        )
 
-        observeEvent(input$add, {
-            n_steps(n_steps() + 1)
-        })
-
-        observeEvent(input$remove, {
-            if (n_steps() > 0) {
-                n_steps(n_steps() - 1)
-            }
-        })
-
-        observeEvent(n_steps(), {
-            output$tabs <- renderUI({
-                if (n_steps() > 0) {
-                    lapply(seq_len(n_steps()), function(i) {
-                        selected <- "Samples Filtering"
-                        if (!is.null(steps[[paste0("step_", i)]])) {
-                            selected <- steps[[paste0("step_", i)]]
-                        }
-                        div(
-                            selectInput(
-                                inputId = NS(id, paste0("step_", i)),
-                                label = paste0("Step ", i),
-                                choices = c(
-                                    "Samples Filtering",
-                                    "Features Filtering",
-                                    "Log Transformation",
-                                    "Normalisation"
-                                ),
-                                selected = selected,
-                                width = "90%"
-                            ),
-                            class = "container widget-box",
-                            style = "width: 80%;"
-                        )
-                    })
-                }
-            })
-            if (n_steps() > 0) {
-                lapply(seq_len(n_steps()), function(i) {
-                    observe({
-                        steps[[paste0("step_", i)]] <- input[[paste0("step_", i)]]
-                    })
-                })
-            }
-        })
-        steps_list <- reactive({
-            full_list <- reactiveValuesToList(steps)
-            lapply(seq_len(n_steps()), function(i) {
-                full_list[[i]]
-            })
-        })
+        pending_config <- reactiveVal(NULL)
 
         observeEvent(input$apply, {
-            global_rv$workflow_config <- steps_list()
+            any_saved <- !is.null(global_rv$step_rvs) &&
+                any(vapply(global_rv$step_rvs, function(rv) rv() > 0L, logical(1)))
+
+            if (any_saved) {
+                pending_config(input$workflow_list)
+                showModal(modalDialog(
+                    title = "Reset processing progress?",
+                    p(
+                        "You have saved processing steps.",
+                        "Changing the workflow will discard all processed assays",
+                        "and you will need to re-run your processing from the beginning."
+                    ),
+                    footer = tagList(
+                        modalButton("Cancel"),
+                        actionButton(
+                            session$ns("confirm_reset"),
+                            "Reset and Apply",
+                            class = "btn-danger"
+                        )
+                    )
+                ))
+            } else {
+                global_rv$workflow_config <- input$workflow_list
+                n <- length(input$workflow_list)
+                shinyalert(
+                    title = "Workflow applied",
+                    text = paste0(
+                        n, " step", if (n != 1) "s" else "",
+                        " successfully configured."
+                    ),
+                    closeOnClickOutside = TRUE,
+                    type = "success",
+                    confirmButtonCol = "#3c8dbc"
+                )
+            }
+        })
+
+        observeEvent(input$confirm_reset, {
+            # Strip .qf$qfeatures back to the initial state: keep original
+            # assays (no suffix) and the initial sets (#0), remove all step
+            # outputs (#1, #2, ...).
+            keep <- !grepl("_\\(QFeaturesGUI#[1-9][0-9]*\\)", names(.qf$qfeatures))
+            .qf$qfeatures <- .qf$qfeatures[, , keep]
+
+            # Reset every step reactiveVal so downstream modules and the
+            # sidebar return to their initial (unsaved) state
+            lapply(global_rv$step_rvs, function(rv) rv(0L))
+
+            global_rv$workflow_config <- pending_config()
+            pending_config(NULL)
+            removeModal()
+            n <- length(global_rv$workflow_config)
+            shinyalert(
+                title = "Workflow reset & applied",
+                text = paste0(
+                    "Processing progress cleared.\n",
+                    n, " step", if (n != 1) "s" else "",
+                    " successfully configured."
+                ),
+                closeOnClickOutside = TRUE,
+                type = "success",
+                confirmButtonCol = "#3c8dbc"
+            )
         })
     })
 }

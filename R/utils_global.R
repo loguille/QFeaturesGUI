@@ -21,23 +21,9 @@ error_handler <- function(func, component_name, ...) {
         },
         warning = function(w) {
             time <- Sys.time()
-            showNotification(
-                HTML(
-                    paste0(
-                        div(HTML(
-                            paste0(
-                                "<b> Warning in ",
-                                component_name,
-                                " </b> at ", format(time, "%H:%M:%S")
-                            )
-                        )),
-                        div(HTML(
-                            "<i>Check the top right exception dropdown menu for more details</i>" # nolint
-                        ))
-                    )
-                ),
-                duration = 30,
-                type = "warning"
+            show_exception_notification(component_name,
+                type = "warning",
+                time = time
             )
             add_exception(
                 title = paste0("Warning in ", component_name),
@@ -51,23 +37,9 @@ error_handler <- function(func, component_name, ...) {
         },
         error = function(e) {
             time <- Sys.time()
-            showNotification(
-                HTML(
-                    paste0(
-                        div(HTML(
-                            paste0(
-                                "<b> Error in ",
-                                component_name,
-                                " </b> at ", format(time, "%H:%M:%S")
-                            )
-                        )),
-                        div(HTML(
-                            "<i>Check the top right exception dropdown menu for more details</i>" # nolint
-                        ))
-                    )
-                ),
-                duration = 30,
-                type = "error"
+            show_exception_notification(component_name,
+                type = "error",
+                time = time
             )
             add_exception(
                 title = paste0("Error in ", component_name),
@@ -80,6 +52,143 @@ error_handler <- function(func, component_name, ...) {
             return(NULL)
         }
     )
+}
+
+# This function is inspired by the messageItem function from the shinydashboardPlus package
+# This custom version serve 3 goals:
+# 1. It change the icon used in for the clock that was no more available from font-awesome
+# 2. It remove the icon from the messageItem (and margin removed)
+# 3. It return the clicked the clicked exception box to the `input$exception_clicked` variable
+#
+#' Create a clickable message item for exception notifications.
+#'
+#' This helper builds an HTML list item that behaves like a clickable exception
+#' entry in a dropdown menu. When clicked, it sets the Shiny input
+#' \code{input$exception_clicked} to the provided \code{id}.
+#'
+#' @param id Character identifier of the exception; this value is sent back via
+#'   \code{input$exception_clicked} when the item is clicked.
+#' @param title Character string used as the main label or summary for the
+#'   exception.
+#' @param time An object representing the time of the exception (typically
+#'   \code{POSIXct}); it will be formatted as \code{"\%H:\%M:\%S"} for display.
+#' @param type Type of message; one of \code{"error"} or \code{"warning"}.
+#'   This controls the icon and color used for the item.
+#'
+#' @return A \code{tags$li} HTML element representing the clickable message item,
+#'   suitable for use in a dropdown menu or message container.
+#' @rdname INTERNAL_interface_clickableMessageItem_custom
+#' @keywords internal
+clickableMessageItem <- function(id, title, time, type = c("error", "warning")) {
+    type <- match.arg(type)
+
+    icon_class <- switch(type,
+        error   = "fa fa-times-circle text-red",
+        warning = "fa fa-exclamation-triangle text-yellow"
+    )
+
+    tags$li(
+        tags$a(
+            href = "#",
+            onclick = sprintf(
+                "Shiny.setInputValue('exception_clicked', '%s', {priority: 'event'});",
+                id
+            ),
+            style = "overflow:hidden;",
+            tags$div(
+                class = "pull-left",
+                tags$i(class = icon_class)
+            ),
+            tags$div(
+                style = paste(
+                    "margin-left:30px;",
+                    "display:flex;",
+                    "justify-content:space-between;",
+                    "align-items:center;"
+                ),
+                tags$span(
+                    title,
+                    style = paste(
+                        "font-weight:600;",
+                        "color:#444;",
+                        "white-space:nowrap;",
+                        "overflow:hidden;",
+                        "text-overflow:ellipsis;",
+                        "max-width:70%;",
+                        "display:inline-block;"
+                    )
+                ),
+                tags$span(
+                    format(time, "%H:%M:%S"),
+                    style = paste(
+                        "font-size:85%;",
+                        "color:#555;",
+                        "white-space:nowrap;",
+                        "margin-left:8px;"
+                    )
+                )
+            ),
+            tags$p(
+                "Click for more details",
+                style = "margin:2px 0 0 30px; font-size:85%; color:#777;"
+            )
+        )
+    )
+}
+
+#' Show a standardized exception notification
+#'
+#' Internal helper to display a formatted Shiny notification for warnings
+#' and errors. The notification includes the component name, timestamp,
+#' and a hint directing the user to the exception dropdown menu.
+#'
+#' @param component_name `character(1)` Name of the component where the
+#'   exception occurred.
+#' @param type `character(1)` Notification type. One of `"error"` or
+#'   `"warning"`.
+#' @param time `POSIXct` Time at which the exception occurred.
+#' @param duration `numeric(1)` Duration (in seconds) the notification
+#'   should be displayed.
+#'
+#' @return Invisibly returns `NULL`. Called for its side effect.
+#'
+#' @keywords internal
+#'
+#' @importFrom shiny showNotification
+#' @importFrom htmltools HTML div
+#'
+#' @rdname INTERNAL_show_exception_notification
+show_exception_notification <- function(
+      component_name,
+      type = c("error", "warning"),
+      time,
+      duration = 30
+) {
+    type <- match.arg(type)
+
+    title <- paste0(
+        "<b> ",
+        tools::toTitleCase(type),
+        " in ",
+        component_name,
+        " </b> at ",
+        format(time, "%H:%M:%S")
+    )
+
+    showNotification(
+        HTML(
+            paste0(
+                div(HTML(title)),
+                div(HTML(
+                    "<i>Check the top right exception dropdown menu for more details</i>"
+                ))
+            )
+        ),
+        type = type,
+        duration = duration
+    )
+
+    invisible(NULL)
 }
 
 #' A function that will add an exception entry to the global exception data
@@ -97,20 +206,44 @@ error_handler <- function(func, component_name, ...) {
 #'
 #' @importFrom shiny isolate
 add_exception <- function(title, type, func_call, message, full_message, time) {
-    new_data <- data.frame(
-        title = as.character(title),
-        type = as.character(type),
-        func_call = as.character(func_call),
-        message = as.character(message),
+    old_data <- isolate(global_rv$exception_data)
+    id <- paste0(
+        "exception_",
+        format(time, "%Y%m%d%H%M%OS6"),
+        "_",
+        nrow(old_data) + 1L
+    )
+    new_row <- data.frame(
+        id = id,
+        title = title,
+        type = type,
+        func_call = func_call,
+        message = message,
         full_message = as.character(full_message),
-        time = as.POSIXct(time),
+        time = time,
         stringsAsFactors = FALSE
     )
-    old_data <- isolate(global_rv$exception_data)
-    global_rv$exception_data <- rbind(new_data, old_data)
+    global_rv$exception_data <- rbind(new_row, old_data)
 }
 
-#' A little function that will capitalize the first letter of a string
+#' A function that will format the names of the sets of a QFeatures,
+#'   initial_sets will be flagged with "_(QFeaturesGUI#0)"
+#'
+#' @param qfeatures the initial qfeatures that will be formatted
+#' @param initial_sets the sets that will be flagged
+#'
+#' @return a `QFeatures` with initial sets flagged with "_(QFeaturesGUI#0)"
+#' @rdname INTERNAL_format_qfeatures
+#' @keywords internal
+format_qfeatures <- function(qfeatures, initial_sets) {
+    names(qfeatures)[initial_sets] <- paste0(
+        names(qfeatures)[initial_sets],
+        "_(QFeaturesGUI#0)"
+    )
+    qfeatures
+}
+
+#' A function that will capitalize the first letter of a string
 #'
 #' @param string `str` string to capitalize the first letter
 #'
@@ -149,6 +282,353 @@ loading <- function(msg) {
     ))
 }
 
+#' Wrap output UI with a waiter loader that supports tag lists
+#'
+#' `waiter::withWaiter()` reads the target id from `element$attribs$id`.
+#' Some Shiny outputs (`plotlyOutput`, `DT::dataTableOutput`) are
+#' `shiny.tag.list` objects where the id is on the first child.
+#' This helper resolves the id robustly and injects the waiter script
+#' without mutating the output tag structure.
+#'
+#' @param element Shiny output element to wrap.
+#' @param html Loader HTML content.
+#' @param color Overlay background color.
+#' @param image Optional overlay image path.
+#'
+#' @return A UI element wrapped with waiter behavior.
+#' @rdname INTERNAL_with_output_waiter
+#' @keywords internal
+with_output_waiter <- function(
+      element,
+      html = waiter::spin_fading_circles(),
+      color = "rgba(0, 0, 0, 0.25)",
+      image = ""
+) {
+    output_id <- element$attribs$id
+    if (is.null(output_id) && is.list(element) && length(element) > 0L) {
+        first_child <- element[[1]]
+        if (is.list(first_child) && !is.null(first_child$attribs$id)) {
+            output_id <- first_child$attribs$id
+        }
+    }
+    if (is.null(output_id)) {
+        stop("`element` must be a Shiny output tag with an `id` attribute.")
+    }
+
+    escape_for_js <- function(value) {
+        value <- as.character(value)[1]
+        value <- gsub("\\\\", "\\\\\\\\", value)
+        value <- gsub("'", "\\\\'", value, fixed = TRUE)
+        value <- gsub("\r", "", value, fixed = TRUE)
+        value <- gsub("\n", "", value, fixed = TRUE)
+        value
+    }
+
+    output_id_js <- escape_for_js(output_id)
+    html_string <- escape_for_js(html)
+    color_string <- escape_for_js(color)
+    image_string <- escape_for_js(image)
+    event_namespace <- gsub("[^A-Za-z0-9_]", "_", as.character(output_id)[1])
+
+    script <- paste0(
+        "(function() {\n",
+        "  var outputId = '", output_id_js, "';\n",
+        "  var namespace = '.qfgwaiter_", event_namespace, "';\n",
+        "  var hasRenderEvent = false;\n",
+        "  var stateStore = window.__qfg_waiter_state || (window.__qfg_waiter_state = {});\n",
+        "  var state = { visible: false };\n",
+        "  stateStore[outputId] = state;\n\n",
+        "  function showWaiter() {\n",
+        "    if (state.visible) {\n",
+        "      return;\n",
+        "    }\n",
+        "    waiter.show({\n",
+        "      id: outputId,\n",
+        "      html: '", html_string, "',\n",
+        "      color: '", color_string, "',\n",
+        "      image: '", image_string, "'\n",
+        "    });\n",
+        "    state.visible = true;\n",
+        "  }\n\n",
+        "  function hideWaiter() {\n",
+        "    if (!state.visible) {\n",
+        "      return;\n",
+        "    }\n",
+        "    waiter.hide(outputId);\n",
+        "    state.visible = false;\n",
+        "  }\n\n",
+        "  function startupShow(attempt) {\n",
+        "    var el = document.getElementById(outputId);\n",
+        "    if (!el || !el.classList || !el.classList.contains('recalculating') || state.visible || hasRenderEvent) {\n",
+        "      return;\n",
+        "    }\n",
+        "    if (el.offsetWidth > 0 && el.offsetHeight > 0) {\n",
+        "      showWaiter();\n",
+        "      return;\n",
+        "    }\n",
+        "    if (attempt < 8) {\n",
+        "      setTimeout(function() { startupShow(attempt + 1); }, 50);\n",
+        "    }\n",
+        "  }\n\n",
+        "  $(document).off(namespace);\n",
+        "  $(document).on('shiny:outputinvalidated' + namespace + ' shiny:recalculating' + namespace, function(event) {\n",
+        "    if (event.target.id !== outputId) {\n",
+        "      return;\n",
+        "    }\n",
+        "    hasRenderEvent = true;\n",
+        "    showWaiter();\n",
+        "  });\n\n",
+        "  $(function() {\n",
+        "    setTimeout(function() { startupShow(0); }, 0);\n",
+        "  });\n\n",
+        "  $(document).on('shiny:value' + namespace + ' shiny:error' + namespace, function(event) {\n",
+        "    if (event.target.id !== outputId) {\n",
+        "      return;\n",
+        "    }\n",
+        "    hideWaiter();\n",
+        "  });\n",
+        "})();"
+    )
+
+    tagList(
+        htmltools::singleton(HTML(paste0("<script>", script, "</script>"))),
+        element
+    )
+}
+
+#' Build the markup used by the full-page task loader
+#'
+#' @param caption Optional loader caption shown under the spinner
+#'
+#' @return HTML tags used by waiter.
+#' @rdname INTERNAL_task_loader_markup
+#' @keywords internal
+task_loader_markup <- function(caption = NULL) {
+    if (is.null(caption) || length(caption) == 0L) {
+        return(waiter::spin_fading_circles())
+    }
+    caption <- as.character(caption)[1]
+    if (is.na(caption) || !nzchar(caption)) {
+        return(waiter::spin_fading_circles())
+    }
+    tagList(
+        waiter::spin_fading_circles(),
+        tags$h4(caption, style = "margin-top: 12px; color: #FFFFFF;")
+    )
+}
+
+#' Start a full-page loader for long-running tasks
+#'
+#' @param caption Optional loader caption.
+#'
+#' @return A waiter loader object.
+#' @rdname INTERNAL_task_loader_start
+#' @keywords internal
+task_loader_start <- function(caption = NULL) {
+    loader <- waiter::Waiter$new(
+        html = task_loader_markup(caption),
+        color = "rgba(0, 0, 0, 0.35)"
+    )
+    loader$show()
+    loader
+}
+
+#' Update the caption of a running full-page task loader
+#'
+#' @param loader A loader object returned by `task_loader_start()`.
+#' @param caption Optional updated caption.
+#'
+#' @return Invisibly `NULL`.
+#' @rdname INTERNAL_task_loader_update
+#' @keywords internal
+task_loader_update <- function(loader, caption = NULL) {
+    if (is.null(loader)) {
+        return(invisible(NULL))
+    }
+    loader$update(html = task_loader_markup(caption))
+    invisible(NULL)
+}
+
+#' Stop a full-page task loader
+#'
+#' @param loader A loader object returned by `task_loader_start()`.
+#'
+#' @return Invisibly `NULL`.
+#' @rdname INTERNAL_task_loader_stop
+#' @keywords internal
+task_loader_stop <- function(loader) {
+    if (!is.null(loader)) {
+        loader$hide()
+    }
+    invisible(NULL)
+}
+
+#' Execute an expression with a full-page task loader
+#'
+#' @param caption Optional loader caption.
+#' @param expr Expression to execute while the loader is displayed.
+#'
+#' @return The value of `expr`.
+#' @rdname INTERNAL_with_task_loader
+#' @keywords internal
+with_task_loader <- function(caption = NULL, expr) {
+    loader <- task_loader_start(caption)
+    on.exit(task_loader_stop(loader), add = TRUE)
+    force(expr)
+}
+
+#' Normalize and validate set selection indices
+#'
+#' Internal helper to validate and normalise assay selections for a
+#' QFeatures object. This function accepts numeric, logical,
+#' or character indices and always returns a validated numeric vector of
+#' set positions.
+#'
+#' This function mirrors the behavior of internal QFeatures index validation
+#' helpers, but is implemented locally to avoid relying on non-exported
+#' functions.
+#'
+#' @param qfeatures A QFeatures object.
+#'
+#' @param initialSets A vector selecting assays in \code{qfeatures}.
+#'   Can be:
+#'   \itemize{
+#'     \item numeric indices
+#'     \item logical vector (same length as number of assays)
+#'     \item character vector of assay names
+#'   }
+#'
+#' @return An integer vector of validated assay indices.
+#'
+#' @rdname INTERNAL_normalize_initial_sets
+#' @keywords internal
+normalise_initial_sets <- function(qfeatures, initialSets) {
+    assay_names <- names(qfeatures)
+    n <- length(assay_names)
+
+    if (is.null(initialSets) || length(initialSets) == 0) {
+        stop("`initialSets` must select at least one assay.")
+    }
+
+    ## Logical indexing
+    if (is.logical(initialSets)) {
+        if (length(initialSets) != n) {
+            stop(
+                "`initialSets` is logical but its length (", length(initialSets),
+                ") does not match the number of assays (", n, ")."
+            )
+        }
+        idx <- which(initialSets)
+
+        ## Numeric indexing
+    } else if (is.numeric(initialSets)) {
+        if (any(initialSets < 1 | initialSets > n)) {
+            stop("`initialSets` contains out-of-bounds indices.")
+        }
+        if (any(is.na(initialSets))) {
+            stop("`initialSets` contains NA values.")
+        }
+        idx <- as.integer(initialSets)
+
+        ## Character indexing (assay names)
+    } else if (is.character(initialSets)) {
+        missing <- setdiff(initialSets, assay_names)
+        if (length(missing) > 0) {
+            stop(
+                "The following assay(s) were not found: ",
+                paste(missing, collapse = ", ")
+            )
+        }
+        idx <- match(initialSets, assay_names)
+    } else {
+        stop(
+            "`initialSets` must be numeric, logical, or character (assay names)."
+        )
+    }
+
+    if (length(idx) == 0) {
+        stop("No assay selected by `initialSets`.")
+    }
+
+    unique(idx)
+}
+
+#' Validate and load a QFeatures object
+#'
+#' Internal helper to validate the \code{qfeatures} argument. If a character
+#' path is provided, the function attempts to read an RDS file and validates
+#' that it contains a \linkS4class{QFeatures} object.
+#'
+#' @param qfeatures A \linkS4class{QFeatures} object or a character path to
+#'   an RDS file containing one.
+#'
+#' @return A validated \linkS4class{QFeatures} object.
+#'
+#' @keywords internal
+#' @noRd
+check_qfeatures <- function(qfeatures) {
+    if (missing(qfeatures)) {
+        stop("`qfeatures` argument is missing")
+    }
+
+    if (is.character(qfeatures)) {
+        if (!file.exists(qfeatures)) {
+            stop("The file '", qfeatures, "' does not exist.")
+        }
+
+        qfeatures <- tryCatch(
+            readRDS(qfeatures),
+            error = function(e) {
+                stop("Failed to read RDS file: ", e$message)
+            }
+        )
+    }
+
+    if (!inherits(qfeatures, "QFeatures")) {
+        stop(
+            "`qfeatures` must be a QFeatures object or a valid path to an RDS file containing one."
+        )
+    }
+
+    qfeatures
+}
+
+#' Validate and map prefilled workflow steps
+#'
+#' Internal helper to validate workflow step identifiers and convert them
+#' to their displayed names used in the UI.
+#'
+#' @param prefilledSteps Character vector of workflow step identifiers
+#'   (e.g. \code{"sampleFiltering"}).
+#'
+#' @return A character vector of display names for workflow steps.
+#'
+#' @keywords internal
+#' @noRd
+check_prefilled_steps <- function(prefilledSteps) {
+    valid_steps <- c(
+        sampleFiltering = "Sample Filtering",
+        normalisation = "Normalisation",
+        zeroToNA = "Zero to NA",
+        logTransform = "Log Transform",
+        imputation = "Imputation",
+        featureFiltering = "Feature Filtering",
+        missingValuesFeatures = "Filtering NAs by Features",
+        missingValuesSamples = "Filtering NAs by Samples",
+        aggregation = "Aggregation",
+        join = "Join"
+    )
+
+    unknown_steps <- setdiff(prefilledSteps, names(valid_steps))
+    if (length(unknown_steps) > 0) {
+        stop(
+            "Unknown workflow steps: ",
+            paste(unknown_steps, collapse = ", ")
+        )
+    }
+
+    unname(valid_steps[prefilledSteps])
+}
 
 #' Will convert a qfeatures object to a summary data.frame object
 #'
@@ -162,14 +642,18 @@ qfeatures_to_df <- function(qfeatures) {
     df <- data.frame(
         "Name" = rep.int(0, length(qfeatures)),
         "Class" = rep.int(0, length(qfeatures)),
-        "nrows" = rep.int(0, length(qfeatures)),
-        "ncols" = rep.int(0, length(qfeatures))
+        "nFeatures" = rep.int(0, length(qfeatures)),
+        "nSamples" = rep.int(0, length(qfeatures)),
+        "nFeaturesMetadata" = rep.int(0, length(qfeatures)),
+        "nSamplesMetadata" = rep.int(0, length(qfeatures))
     )
     for (i in seq_along(qfeatures)) {
         df[i, "Name"] <- remove_QFeaturesGUI(names(qfeatures)[[i]])
         df[i, "Class"] <- class(qfeatures[[i]])[[1]]
-        df[i, "nrows"] <- nrow(qfeatures[[i]])[[1]]
-        df[i, "ncols"] <- ncol(qfeatures[[i]])[[1]]
+        df[i, "nFeatures"] <- nrow(qfeatures[[i]])[[1]]
+        df[i, "nSamples"] <- ncol(qfeatures[[i]])[[1]]
+        df[i, "nFeaturesMetadata"] <- ncol(rowData(qfeatures[[i]]))[[1]]
+        df[i, "nSamplesMetadata"] <- suppressWarnings(ncol(colData(qfeatures)))
     }
 
     df
@@ -252,26 +736,42 @@ page_assays_subset <- function(qfeatures, pattern) {
 #'
 pca_plotly <- function(df, pca_result, color_name, show_legend) {
     stopifnot(is.data.frame(df))
-    plotly <- plot_ly(df,
-        x = ~PC1,
-        y = ~PC2,
-        color = as.formula(paste0("~", color_name)),
-        text = ~Row.names,
-        type = "scatter",
-        mode = "markers",
-        colors = if (is.numeric(df[[color_name]])) {
+    if (color_name == "NULL") {
+        colorFormula <- NULL
+        text <- row.names(df)
+        colorPalette <- suppressWarnings(RColorBrewer::brewer.pal(1, "Set1"))
+        hoverText <- paste(
+            "%{text}<br>",
+            "%{customdata}<extra></extra>"
+        )
+        customizeData <- "NULL"
+    } else {
+        colorFormula <- as.formula(paste0("~", color_name))
+        text <- ~.qfeaturesgui_row_id
+        colorPalette <- if (is.numeric(df[[color_name]])) {
             viridisLite::viridis(10)
         } else {
             suppressWarnings(RColorBrewer::brewer.pal(
                 length(unique(df[[color_name]])),
                 "Set1"
             ))
-        },
-        hovertemplate = paste(
+        }
+        hoverText <- paste(
             "%{text}<br>",
             paste0(color_name, ": %{customdata}<extra></extra>")
-        ),
-        customdata = as.formula(paste0("~", color_name))
+        )
+        customizeData <- as.formula(paste0("~", color_name))
+    }
+    plotly <- plot_ly(df,
+        x = ~PC1,
+        y = ~PC2,
+        color = colorFormula,
+        text = text,
+        type = "scatter",
+        mode = "markers",
+        colors = colorPalette,
+        hovertemplate = hoverText,
+        customdata = customizeData
     ) %>%
         layout(
             xaxis = list(title = paste(
@@ -312,33 +812,93 @@ pca_plotly <- function(df, pca_result, color_name, show_legend) {
     return(plotly)
 }
 
-
-#' A function that will add the assays to the global_rv qfeatures object
+#' Check whether an assay set is empty
 #'
-#' @param processed_qfeatures `QFeatures` object to add to the global_rv qfeatures object
-#' @param step_number `int` number of the step
+#' @param assay_object a SummarizedExperiment-like assay object
+#'
+#' @return a logical scalar
+#' @rdname INTERNAL_is_empty_set
+#' @keywords internal
+is_empty_set <- function(assay_object) {
+    nrow(assay_object) == 0L || ncol(assay_object) == 0L
+}
+
+#' A function that adds processed assays to the non-reactive global QFeatures store
+#'
+#' @param processed_qfeatures `QFeatures` object whose assays will be added to
+#'   `.qf$qfeatures`. Each assay is renamed with a step-number suffix following
+#'   the `_(QFeaturesGUI#<step_number>)_<type>_<step_number>` convention, and
+#'   an assay link from the parent assay is recorded.
+#'   Empty assays are skipped and not added.
+#' @param step_number `int` the workflow step number, used to construct the new
+#'   assay names and links
+#' @param type `character(1)` label describing the processing type (e.g.
+#'   `"samples_filtering"`, `"log_transformation"`), embedded in the new assay
+#'   names
+#' @param varFrom see [QFeatures::addAssayLink].
+#' @param varTo see [QFeatures::addAssayLink].
 #' @rdname INTERNAL_add_assays_to_global_rv
 #' @keywords internal
 #'
-#' @return (NULL) does not return anything but will add the assays to the global_rv qfeatures object
+#' @return Invisibly `NULL`. Called for its side effect: assays are written into
+#'   `.qf$qfeatures` (the non-reactive global environment store).
 #' @importFrom QFeatures addAssayLink
-
-add_assays_to_global_rv <- function(processed_qfeatures, step_number, type) {
+#' @importFrom shinyalert shinyalert
+add_assays_to_global_rv <- function(processed_qfeatures, step_number, type, varFrom = NULL, varTo = NULL) {
+    n_added <- 0L
+    n_skipped_empty <- 0L
     for (name in names(processed_qfeatures)) {
+        assay_to_add <- processed_qfeatures[[name]]
+        if (is_empty_set(assay_to_add)) {
+            n_skipped_empty <- n_skipped_empty + 1L
+            next
+        }
+
         new_name <- paste0(
             strsplit(name, "_(QFeaturesGUI#", fixed = TRUE)[[1]][[1]],
             "_(QFeaturesGUI#", step_number, ")",
             "_", type, "_", step_number
         )
 
-        global_rv$qfeatures[[new_name]] <- processed_qfeatures[[name]]
-
-        global_rv$qfeatures <- addAssayLink(
-            global_rv$qfeatures,
+        .qf$qfeatures[[new_name]] <- assay_to_add
+        if (is.null(varFrom) || is.null(varTo)) {
+          .qf$qfeatures <- addAssayLink(
+            .qf$qfeatures,
             from = name,
             to = new_name
-        )
+          )
+          n_added <- n_added + 1L
+        } else {
+          .qf$qfeatures <- addAssayLink(
+            .qf$qfeatures,
+            from = name,
+            to = new_name,
+            varFrom = varFrom,
+            varTo = varTo
+          )
+          n_added <- n_added + 1L
+        }
+        
     }
+    alert_text <- paste0(
+      n_added, " set", if (n_added != 1L) "s" else "",
+      " added to QFeatures."
+    )
+    if (n_skipped_empty > 0L) {
+      alert_text <- paste0(
+        alert_text, " ",
+        n_skipped_empty, " empty set",
+        if (n_skipped_empty != 1L) "s were" else " was",
+        " skipped."
+      )
+    }
+    shinyalert(
+        title = "Step saved",
+        text = alert_text,
+        type = "success",
+        confirmButtonCol = "#3c8dbc",
+        closeOnClickOutside = TRUE
+    )
 }
 
 
@@ -368,7 +928,7 @@ log_transform_qfeatures <- function(qfeatures, base, pseudocount) {
 #' A function that will normalise all the assays of a qfeatures
 #'
 #' @param qfeatures `QFeatures` object to normalise
-#' @param method `str` method to use for the normalisation (see `QFeatures::normalise`)
+#' @param method `str` method to use for normalisation (see `QFeatures::normalize`)
 #' @return `QFeatures` object with the normalised assays
 #' @rdname INTERNAL_normalisation_qfeatures
 #' @keywords internal
@@ -386,172 +946,373 @@ normalisation_qfeatures <- function(qfeatures, method) {
     QFeatures(el, colData = colData(qfeatures))
 }
 
+#' A function that lists the imputation methods supported by the GUI
+#'
+#' @return A named list describing supported imputation methods.
+#' @rdname INTERNAL_imputation_method_specs
+#' @keywords internal
+imputation_method_specs <- function() {
+    list(
+        knn = list(
+            package = "impute",
+            description = "K-nearest neighbors imputation.",
+            default_parameters = c(
+                "MARGIN = 1",
+                "k = 10",
+                "rowmax = 0.5",
+                "colmax = 0.8",
+                "maxp = 1500",
+                "rng.seed = 362436069"
+            ),
+            call_args = list(MARGIN = 1L)
+        ),
+        MinDet = list(
+            package = NULL,
+            description = "Minimum deterministic imputation.",
+            default_parameters = c("q = 0.01", "MARGIN = 2"),
+            call_args = list(q = 0.01, MARGIN = 2L)
+        ),
+        zero = list(
+            package = NULL,
+            description = "Replace missing values with zero.",
+            default_parameters = character(0),
+            call_args = list()
+        )
+    )
+}
 
-#' A function that return a plot of the densities of intensities by sample
+
+#' A function that returns imputation methods available in the current session
+#'
+#' @return `character()` vector of method names accepted by the GUI.
+#' @rdname INTERNAL_available_imputation_methods
+#' @keywords internal
+available_imputation_methods <- function() {
+    specs <- imputation_method_specs()
+    names(specs)[vapply(specs, function(spec) {
+        is.null(spec$package) || requireNamespace(spec$package, quietly = TRUE)
+    }, logical(1))]
+}
+
+
+#' A function that validates an imputation method before it is used
+#'
+#' @param method `character(1)` imputation method used by `QFeatures::impute`
+#' @return The method specification entry invisibly.
+#' @rdname INTERNAL_assert_imputation_method_available
+#' @keywords internal
+assert_imputation_method_available <- function(method) {
+    specs <- imputation_method_specs()
+    if (!(method %in% names(specs))) {
+        stop("Unknown imputation method: ", method, call. = FALSE)
+    }
+
+    required_package <- specs[[method]]$package
+    if (!is.null(required_package) && !requireNamespace(required_package, quietly = TRUE)) {
+        stop(
+            "Imputation method '", method, "' requires the optional package '",
+            required_package, "'. Install it to use this method.",
+            call. = FALSE
+        )
+    }
+
+    invisible(specs[[method]])
+}
+
+
+#' A function that will impute all assays of a qfeatures object
+#'
+#' @param object `QFeatures` object to impute
+#' @param impute_method `character(1)` imputation method used by `QFeatures::impute`
+#' @param ... additional parameters forwarded to `QFeatures::impute`
+#' @return `QFeatures` object with imputed assays
+#' @rdname INTERNAL_impute_qfeatures
+#' @keywords internal
+impute_qfeatures <- function(object, impute_method, ...) {
+    if (identical(impute_method, "none")) {
+        return(object)
+    }
+
+    assert_imputation_method_available(impute_method)
+
+    source_names <- names(object)
+    imputed_names <- paste0(source_names, "__imputed_tmp")
+    imputed_qf <- QFeatures::impute(
+        object = object,
+        i = seq_along(object),
+        name = imputed_names,
+        method = impute_method,
+        ...
+    )
+
+    out <- suppressMessages(suppressWarnings(imputed_qf[, , imputed_names]))
+    names(out) <- source_names
+    out
+}
+
+
+#' A function that returns ridge density plots of intensities by sample group
 #'
 #' @param qfeatures `QFeatures` object
-#' @param color `str` colname of the column of colData to use as color
-#' @return a plotly object
+#' @param color `character(1)` optional column name in `colData` used to
+#'   group samples. If `NULL`, all samples are treated as one group.
+#' @param title `character(1)` title to display on the plot
+#' @return A plotly object containing one ridge per sample group.
 #'
 #' @rdname INTERNAL_density_by_sample_plotly
 #' @keywords internal
 #' @importFrom SummarizedExperiment assay colData
+#' @importFrom plotly layout
+#' @importFrom plotly plot_ly
+density_by_sample_plotly <- function(qfeatures, color = NULL, title = "Density by sample group") {
+    if (length(qfeatures) == 0L) {
+        return(plot_ly() %>% layout(title = title))
+    }
 
-density_by_sample_plotly <- function(qfeatures, color) {
-    combined_df <- data.frame(intensity = numeric(), sample = character())
+    sample_metadata <- as.data.frame(colData(qfeatures))
+    sample_names <- rownames(sample_metadata)
+    if (is.null(sample_names) || length(sample_names) == 0L) {
+        sample_names <- colnames(qfeatures[[1]])
+    }
+
+    if (is.null(color)) {
+        sample_groups <- rep("All samples", length(sample_names))
+    } else {
+        if (!(color %in% colnames(sample_metadata))) {
+            stop("Unknown color column: ", color)
+        }
+        sample_groups <- as.character(sample_metadata[[color]])
+        sample_groups[is.na(sample_groups)] <- "NA"
+        sample_groups[!nzchar(sample_groups)] <- "NA"
+    }
+    names(sample_groups) <- sample_names
+
+    combined_df <- data.frame(
+        intensity = numeric(),
+        group = character(),
+        stringsAsFactors = FALSE
+    )
     for (assayName in names(qfeatures)) {
         assayData <- assay(qfeatures[[assayName]])
 
         intensities <- as.vector(assayData)
         sampleNames <- rep(colnames(assayData), each = nrow(assayData))
+        groups <- as.character(sample_groups[sampleNames])
+        groups[is.na(groups)] <- "NA"
 
-        assay_df <- data.frame(intensity = intensities, sample = sampleNames)
+        assay_df <- data.frame(
+            intensity = intensities,
+            group = groups,
+            stringsAsFactors = FALSE
+        )
 
         combined_df <- rbind(combined_df, assay_df)
     }
+    combined_df <- combined_df[is.finite(combined_df$intensity), , drop = FALSE]
+    if (nrow(combined_df) == 0L) {
+        return(plot_ly() %>% layout(title = title))
+    }
 
-    combined_df$color <- colData(qfeatures)[combined_df$sample, color]
+    group_levels <- sort(unique(combined_df$group))
+    if (length(group_levels) <= 1L) {
+        ridge_colors <- setNames("steelblue", group_levels)
+    } else {
+        base_palette <- suppressWarnings(
+            RColorBrewer::brewer.pal(min(8L, length(group_levels)), "Set2")
+        )
+        if (length(group_levels) > length(base_palette)) {
+            base_palette <- grDevices::colorRampPalette(base_palette)(length(group_levels))
+        } else {
+            base_palette <- base_palette[seq_along(group_levels)]
+        }
+        ridge_colors <- setNames(base_palette, group_levels)
+    }
 
-    plotlyridges(
+    p <- plotlyridges(
         data = combined_df,
         vardens = "intensity",
-        varcat = "sample"
+        varcat = "group",
+        category_colors = ridge_colors
     )
+    p %>% layout(title = title)
 }
 
 # This function comes from the github repo rushkin/bitsandends
 # Thanks to iliarushkin for this function
 
-#' Mimicks \code{ggridges} but using \code{plotly} so that the output is interactive
+#' Build a simple interactive ridge density plot
 #'
-#' @param data data-frame of data to plot
-#' @param vardens name of the column in \code{data} to use on the x-axis ('density variable')
-#' @param varcat name of the column in \code{data} to use for splitting plots ('category variable')
-#' @param linecolor line color
-#' @param fillcolor fill color
-#' @param fillopacity fill opacity
-#' @param linewidth line width
-#' @param scale vertical scale of plots, compared to the spacing between plots.
-#' @param logspaced boolean, whether to use log-spaced points in calculating density
-#' @param cut.from how much to cut into the region to the left of the smallest data values, in units of the bandwidth.
-#' @param cut.to how much to cut into the region to the right of the greatest data values, in units of the bandwidth.
-#' @param n number of points used in calculation of density
-#' @param bw bandwidth to use in density calculation. if NULL, uses the default of \code{density}.
-#' @param bw.separate if TRUE, will use separately estimated bandwidth in each plot, overriding \code{bw}
-#' @param height.norm vertical normalization of plots. If 'integral', will normalize to unit area under the curve. If '1' will normalize to unit maximum height
-#' @param round.digits number of rounding digits used in hover labels
-#' @param x.min lower end of the x-axis range
-#' @param height passed as \code{height} to the plotly object
-#' @param width passed as \code{width} to the plotly object
+#' @param data `data.frame` to plot.
+#' @param vardens `character(1)` column name in `data` used as the density variable.
+#' @param varcat `character(1)` column name in `data` used as the category variable.
+#' @param category_colors optional named `character` vector mapping each
+#'   category in `varcat` to a color. If `NULL`, a default color is used.
+#' @param fillopacity `numeric(1)` alpha used for ridge fill color.
+#' @param linewidth `numeric(1)` ridge line width.
+#' @param height optional `numeric(1)` plot height passed to `plotly`.
+#' @param width optional `numeric(1)` plot width passed to `plotly`.
 #' @return a plotly object
 #'
 #' @rdname INTERNAL_plotlyridges
 #' @keywords internal
-#' @importFrom plotly plot_ly add_trace layout
+#' @importFrom plotly plot_ly add_trace add_annotations layout
 #'
-plotlyridges <- function(
-        data, vardens, varcat, linecolor = "darkblue", fillcolor = "steelblue", fillopacity = 0.6, linewidth = 0.5, scale = 0.9, logspaced = FALSE, cut.from = 0, cut.to = 3, n = 512, bw = NULL, bw.separate = FALSE, height.norm = "integral", round.digits = 2, x.min = 0,
-        height = NULL,
-        width = NULL) {
-    data <- subset(data, !is.na(data[, vardens]))
-
-    r <- range(data[, vardens])
-
-    if (is.null(bw)) {
-        if (!bw.separate) {
-            if (logspaced) {
-                x <- log(data[, vardens])
-            } else {
-                x <- data[, vardens]
-            }
-            if (length(x) > 1) {
-                bw <- density(x)$bw
-            } else {
-                bw <- 1
-            }
-        }
+plotlyridges <- function(data, vardens, varcat, category_colors = NULL, fillopacity = 0.6, linewidth = 0.5, height = NULL, width = NULL) {
+    empty_plot <- function() {
+        p <- plotly::plot_ly(type = "scatter", mode = "lines", height = height, width = width)
+        p <- plotly::add_annotations(
+            p,
+            text = "No finite values available for density estimation.",
+            xref = "paper",
+            yref = "paper",
+            x = 0.5,
+            y = 0.5,
+            showarrow = FALSE
+        )
+        plotly::layout(
+            p,
+            showlegend = FALSE,
+            xaxis = list(showticklabels = FALSE, zeroline = FALSE, showgrid = FALSE),
+            yaxis = list(showticklabels = FALSE, zeroline = FALSE, showgrid = FALSE)
+        )
     }
 
-    df <- aggregate(data[, vardens], by = list(varcat = data[, varcat]), FUN = function(x) {
-        if (length(x) == 0) {
+    as_rgba <- function(col, alpha) {
+        col_rgb <- as.vector(grDevices::col2rgb(col)) / 255
+        grDevices::rgb(col_rgb[1], col_rgb[2], col_rgb[3], alpha = alpha)
+    }
+
+    density_hover_text <- function(values) {
+        values <- values[is.finite(values)]
+        if (length(values) == 0L) {
+            return("")
+        }
+        q <- stats::quantile(values)
+        paste0(
+            "Observations: ", prettyNum(length(values), big.mark = ","),
+            "<br>Median: ", round(q[3], 2),
+            "<br>Range: [", round(q[1], 2), ", ", round(q[5], 2), "]",
+            "<br>Interquartile Range: [", round(q[2], 2), ", ", round(q[4], 2), "]"
+        )
+    }
+
+    build_density_curve <- function(values) {
+        values <- values[is.finite(values)]
+        if (length(values) == 0L) {
             return(NULL)
         }
-        if (bw.separate) {
-            if (length(x) == 1) {
-                bw <- 1
-            } else {
-                bw <- "nrd0"
-            }
-        }
-        if (logspaced) {
-            x <- log(x)
-        }
-        from <- min(x, na.rm = TRUE) - cut.from * bw
-        to <- max(x, na.rm = TRUE) + cut.to * bw
-        d <- density(x, bw = bw, n = n, from = from, to = to)[1:2]
-        # Normalize height
-        if (height.norm == "1") {
-            d$y <- d$y / max(d$y)
-        }
-        if (height.norm == "integral") {
-            d$y <- d$y / (sum(d$y) * (d$x[2] - d$x[1]))
+
+        density_values <- if (length(values) >= 2L) {
+            tryCatch(stats::density(values, bw = "nrd0", n = 512), error = function(e) NULL)
+        } else {
+            # Fallback for one-point groups.
+            from <- values[1] - 0.5
+            to <- values[1] + 0.5
+            x <- seq(from, to, length.out = 512)
+            y <- stats::dnorm(x, mean = values[1], sd = 0.1)
+            list(x = x, y = y)
         }
 
-        if (logspaced) {
-            d$x <- exp(d$x)
-            d$y <- d$y / d$x
+        if (is.null(density_values)) {
+            return(NULL)
         }
+        density_values[c("x", "y")]
+    }
 
+    stopifnot(is.data.frame(data))
+    stopifnot(vardens %in% colnames(data), varcat %in% colnames(data))
 
-        return(d)
+    values <- data[, vardens]
+    groups <- as.character(data[, varcat])
+    groups[is.na(groups) | !nzchar(groups)] <- "NA"
+    keep <- is.finite(values)
+    values <- values[keep]
+    groups <- groups[keep]
+    if (length(values) == 0L) {
+        return(empty_plot())
+    }
+
+    r <- range(values, finite = TRUE)
+    if (!all(is.finite(r))) {
+        return(empty_plot())
+    }
+
+    split_values <- split(values, groups, drop = TRUE)
+    split_values <- split_values[vapply(split_values, function(x) any(is.finite(x)), logical(1))]
+    group_names <- names(split_values)
+    if (length(group_names) == 0L) {
+        return(empty_plot())
+    }
+
+    curves <- lapply(split_values, build_density_curve)
+    keep_curves <- vapply(curves, Negate(is.null), logical(1))
+    curves <- curves[keep_curves]
+    split_values <- split_values[keep_curves]
+    group_names <- names(curves)
+    if (length(group_names) == 0L) {
+        return(empty_plot())
+    }
+
+    linecolors <- rep("steelblue4", length(group_names))
+    fillcolors <- rep(as_rgba("steelblue", fillopacity), length(group_names))
+    if (!is.null(category_colors)) {
+        category_colors <- as.character(category_colors)
+        if (!is.null(names(category_colors))) {
+            mapped_colors <- unname(category_colors[group_names])
+        } else {
+            mapped_colors <- rep(category_colors, length.out = length(group_names))
+        }
+        mapped_colors[is.na(mapped_colors) | !nzchar(mapped_colors)] <- "steelblue4"
+        linecolors <- mapped_colors
+        fillcolors <- vapply(linecolors, as_rgba, alpha = fillopacity, character(1))
+    }
+
+    hover_text <- vapply(split_values, density_hover_text, character(1))
+
+    ymax <- max(unlist(lapply(curves, `[[`, "y")), na.rm = TRUE)
+    if (!is.finite(ymax) || ymax <= 0) {
+        ymax <- 1
+    }
+    curves <- lapply(curves, function(curve) {
+        curve$y <- 0.9 * curve$y / ymax
+        curve$y[!is.finite(curve$y)] <- 0
+        curve
     })
 
-    text <- aggregate(data[, vardens], by = list(varcat = data[, varcat]), FUN = function(x) {
-        x <- x[!is.na(x)]
-        q <- quantile(x)
-        text <- paste0("Observations: ", prettyNum(length(x), big.mark = ","), "<br>Median: ", round(q[3], round.digits), "<br>Range: [", round(q[1], round.digits), ", ", round(q[5], round.digits), "]", "<br>Interquartile Range: [", round(q[2], round.digits), ", ", round(q[4], round.digits), "]")
-        return(text)
-    })$x
-
-
-
-
-    catnames <- df[[1]]
-    x <- df[[2]][1:(length(df[[1]]))]
-    y <- df[[2]][-(1:(length(df[[1]])))]
-
-
-
-    ymax <- max(unlist(y), na.rm = TRUE)
-    y <- lapply(y, function(yy) {
-        yy <- scale * yy / ymax
-        return(yy)
-    })
     p <- plotly::plot_ly(type = "scatter", mode = "lines", height = height, width = width)
 
-    fillcolor <- as.vector(col2rgb(fillcolor)) / 255
-    fillcolor <- rgb(fillcolor[1], fillcolor[2], fillcolor[3], alpha = fillopacity)
-
-
-    if (is.null(x.min)) {
-        xaxis <- list(range = r)
-    } else {
-        xaxis <- list(range = c(x.min, r[2]))
-    }
-
-    for (i in rev(1:length(catnames))) {
-        p <- plotly::add_trace(p, x = x[[i]], y = i, line = list(color = linecolor, width = linewidth), showlegend = FALSE, hoverinfo = "none")
-        p <- plotly::add_trace(p,
-            x = x[[i]], y = y[[i]] + i, fill = "tonexty", fillcolor = fillcolor, line = list(color = linecolor, width = linewidth), showlegend = FALSE, name = catnames[i], hoverinfo = "text", text = text[i]
+    for (i in rev(seq_along(group_names))) {
+        p <- plotly::add_trace(
+            p,
+            x = curves[[i]]$x,
+            y = i,
+            line = list(color = linecolors[i], width = linewidth),
+            showlegend = FALSE,
+            hoverinfo = "none"
         )
-
-        p <- plotly::layout(p,
-            yaxis = list(tickmode = "array", tickvals = (1:length(catnames)), ticktext = catnames, showline = TRUE),
-            xaxis = xaxis
+        p <- plotly::add_trace(
+            p,
+            x = curves[[i]]$x,
+            y = curves[[i]]$y + i,
+            fill = "tonexty",
+            fillcolor = fillcolors[i],
+            line = list(color = linecolors[i], width = linewidth),
+            showlegend = FALSE,
+            name = group_names[i],
+            hoverinfo = "text",
+            text = hover_text[i]
         )
     }
-    p
-    return(p)
+    plotly::layout(
+        p,
+        yaxis = list(
+            tickmode = "array",
+            tickvals = seq_along(group_names),
+            ticktext = group_names,
+            showline = TRUE
+        ),
+        xaxis = list(range = r)
+    )
 }
 
 #' A function that create a data frame that contains the intensities, the sample names (+ one col of colData and one col of rowData)
@@ -568,21 +1329,35 @@ plotlyridges <- function(
 #'
 
 summarize_assays_to_df <- function(qfeatures, sample_column, feature_column = NULL) {
-
-    combined_df <- data.frame(PSM = character(), intensity = numeric(), sample = character())
+    combined_df <- data.frame(
+        PSM = character(0),
+        sample = character(0),
+        intensity = numeric(0),
+        sample_type = character(0),
+        stringsAsFactors = FALSE
+    )
+    if (!is.null(feature_column)) {
+        combined_df$feature_type <- character(0)
+    }
     for (assayName in names(qfeatures)) {
         assayData <- as.data.frame(assay(qfeatures[[assayName]]))
-
-        assayData <- pivot_longer(assayData, everything(), names_to = "sample", values_to = "intensity")
         assayData$PSM <- rownames(assayData)
+        if (ncol(assayData) <= 1L) {
+            next
+        }
+        assayData <- pivot_longer(
+            assayData,
+            cols = -PSM,
+            names_to = "sample",
+            values_to = "intensity"
+        )
 
         matched_indices <- match(assayData$sample, rownames(colData(qfeatures)))
-        length(matched_indices)
-        assayData$sample_type <- colData(qfeatures)[matched_indices, sample_column]
+        assayData$sample_type <- as.vector(colData(qfeatures)[matched_indices, sample_column])
 
         if (!is.null(feature_column)) {
             matched_indices <- match(assayData$PSM, rownames(rowData(qfeatures[[assayName]])))
-            assayData$feature_type <- rowData(qfeatures[[assayName]])[matched_indices, feature_column]
+            assayData$feature_type <- as.vector(rowData(qfeatures[[assayName]])[matched_indices, feature_column])
         }
         combined_df <- rbind(combined_df, assayData)
     }
@@ -627,8 +1402,369 @@ features_boxplot <- function(assays_df) {
 #'
 
 unique_feature_boxplot <- function(assays_df, feature) {
-    plot <- ggplot(assays_df[assays_df$feature_type == feature, , drop = FALSE], aes(x = sample_type, y = intensity, colour = sample_type)) +
+    df <- assays_df[assays_df$feature_type == feature, , drop = FALSE]
+    if (nrow(df) == 0) {
+        return(plot_ly(
+            x = numeric(0),
+            y = numeric(0),
+            type = "scatter",
+            mode = "markers"
+        ) %>%
+            add_annotations(
+                text = "No values available for this feature.",
+                xref = "paper",
+                yref = "paper",
+                x = 0.5,
+                y = 0.5,
+                showarrow = FALSE
+            ) %>%
+            layout(
+                showlegend = FALSE,
+                xaxis = list(showticklabels = FALSE, zeroline = FALSE, showgrid = FALSE),
+                yaxis = list(showticklabels = FALSE, zeroline = FALSE, showgrid = FALSE)
+            ))
+    }
+    plot <- ggplot(df, aes(x = sample_type, y = intensity, colour = sample_type)) +
         geom_boxplot()
-
     suppressWarnings(ggplotly(plot))
+}
+
+#' A function that will return the percentage of samples/features that have been removed
+#'
+#' @param qfeatures_before_filtering a qfeatures object that haven't been filtered.
+#' @param qfeatures_after_filtering  a qfeatures object that have been filtered.
+#' @param type features or samples.
+#'
+#' @return a percentage
+#'
+#' @rdname INTERNAL_percent_removed
+#' @keywords internal
+#' @importFrom QFeatures rbindRowData
+#' @importFrom SummarizedExperiment colData
+
+percent_removed <- function(qfeatures_before_filtering, qfeatures_after_filtering, type) {
+    type <- match.arg(type, c("features", "samples"))
+    if (type == "features") {
+        before_features_nrow <- count_features_rows(qfeatures_before_filtering)
+        after_features_nrow <- count_features_rows(qfeatures_after_filtering)
+        if (before_features_nrow == 0L) {
+            return(0)
+        }
+        pct_removed <- round(
+            (before_features_nrow - after_features_nrow)
+            / before_features_nrow * 100,
+            digits = 1
+        )
+    } else {
+        ncol_before_filtering <- nrow(
+            colData(
+                qfeatures_before_filtering
+            )
+        )
+        ncol_after_filtering <- nrow(
+            colData(
+                qfeatures_after_filtering
+            )
+        )
+        if (ncol_before_filtering == 0L) {
+            return(0)
+        }
+        pct_removed <- round(
+            (ncol_before_filtering - ncol_after_filtering)
+            / ncol_before_filtering * 100,
+            digits = 1
+        )
+    }
+    return(pct_removed)
+}
+
+#' A function that will return the number of features by rows
+#'
+#' @param qfeatures a qfeatures object.
+#'
+#' @return an integer
+#'
+#' @rdname INTERNAL_count_features_rows
+#' @keywords internal
+#'
+
+count_features_rows <- function(qfeatures) {
+  sum(vapply(seq_along(qfeatures), function(i) {
+    nrow(qfeatures[[i]])
+  }, integer(1)))
+}
+
+#' A function that will return the number of samples/features that have been removed
+#'
+#' @param qfeatures_before_filtering a qfeatures object that haven't been filtered.
+#' @param qfeatures_after_filtering  a qfeatures object that have been filtered.
+#' @param type features or samples.
+#'
+#' @return an integer
+#'
+#' @rdname INTERNAL_number_removed
+#' @keywords internal
+#' @importFrom QFeatures rbindRowData
+#' @importFrom SummarizedExperiment colData
+#'
+
+number_removed <- function(qfeatures_before_filtering, qfeatures_after_filtering, type) {
+    type <- match.arg(type, c("features", "samples"))
+    if (type == "features") {
+        nb_removed <- count_features_rows(qfeatures_before_filtering) -
+            count_features_rows(qfeatures_after_filtering)
+    } else {
+        nb_removed <- nrow(
+            colData(
+                qfeatures_before_filtering
+            )
+        ) - nrow(
+            colData(
+                qfeatures_after_filtering
+            )
+        )
+    }
+    return(nb_removed)
+}
+
+#' Internal function that return the available variables (column
+#' names) from the sample annotations (colData) or feature annotations
+#' (rowData) of a QFeatures object. The function is robust against
+#' empty QFeatures objects.
+#'
+#' @param x a QFeatures object
+#' @param what a character(1), either "rowData" or "colData" depending
+#'   on whether to fetch feature annotations or sample annotations,
+#'   respectively.
+#'
+#' @return a vector of column names or an empty vector if no columns
+#'   are found.
+#'
+#' @rdname INTERNAL_annotation_cols
+#' @keywords internal
+annotation_cols <- function(x, what) {
+  if (length(x) == 0) {
+    character(0)
+  } else {
+    annot <- switch(
+      what,
+      rowData = rowData(x)[[1]],
+      colData = colData(x)
+    )
+    colnames(annot)
+  }
+}
+
+#' A function that will aggregate all the assays of a qfeatures
+#'
+#' @param qfeatures `QFeatures` object to aggregate.
+#' @param method `character(1)` naming the aggregation function to use. Must be one of
+#'   `"robustSummary"`, `"medianPolish"`, `"colMeans"`, `"colMedians"`, or `"colSums"`.
+#' @param fcol `character(1)` naming a `rowData` variable that defines how to aggregate
+#'   the features within each assay. This variable is either a character or a (possibly
+#'   sparse) matrix.
+#' @return A `QFeatures` object with assays aggregated according to `fcol` using the
+#'   selected `method`.
+#' @rdname INTERNAL_aggregation_qfeatures
+#' @keywords internal
+#' @importFrom QFeatures normalize QFeatures aggregateFeatures
+#' @importFrom SummarizedExperiment colData
+#' @importFrom matrixStats colMedians
+#' @importFrom MsCoreUtils robustSummary medianPolish
+#' @importFrom waiter Waiter spin_fading_circles
+#'
+aggregation_qfeatures <- function(qfeatures, method,
+                                  fcol) {
+    n <- length(qfeatures)
+    caption <- if (n > 0L) {
+        paste0("Aggregation of 1/", n, " sets")
+    } else {
+        "Aggregation in progress"
+    }
+    loader <- task_loader_start(caption)
+    on.exit(task_loader_stop(loader), add = TRUE)
+
+    el <- lapply(seq_along(qfeatures), function(i) {
+        name <- names(qfeatures)[i]
+        task_loader_update(loader, paste0("Aggregation of ", i, "/", n, " sets"))
+        aggregateFeatures(
+            object = qfeatures[[name]],
+            fun = list(
+                robustSummary = MsCoreUtils::robustSummary,
+                medianPolish = MsCoreUtils::medianPolish,
+                colMeans = base::colMeans,
+                colMedians = matrixStats::colMedians,
+                colSums = base::colSums
+            )[[method]],
+            fcol = fcol,
+            na.rm = TRUE
+        )
+    })
+    names(el) <- names(qfeatures)
+    QFeatures(el, colData = colData(qfeatures))
+}
+
+#' A function that will join all the assays of a qfeatures
+#'
+#' @param qfeatures `QFeatures` object to join
+#'
+#' @return `QFeatures` object with the joined assays
+#'
+#' @rdname INTERNAL_join_qfeatures
+#'
+#' @keywords internal
+#'
+#' @importFrom QFeatures joinAssays createPrecursorId
+#'
+join_qfeatures <- function(qfeatures, fcol, fcol2 = NULL) {
+  if (!is.null(fcol2)) {
+    fcol_combined <- paste0(fcol, "_", fcol2)
+    qfeatures <- createPrecursorId(
+      qfeatures, name = fcol_combined,
+      fcols = c(fcol, fcol2)
+    )
+    fcol <- fcol_combined
+  }
+  qf <- joinAssays(qfeatures, names(qfeatures), fcol = fcol)
+  suppressMessages(suppressWarnings(qf[, , "joinedAssay"]))
+}
+
+#' A function that will add the assays to the package-level `.qf$qfeatures`
+#' object when performing a joining step, where multiple parent assays
+#' are linked to one child assay.
+#'
+#' @param processed_qfeatures `QFeatures` object whose assays will be added to
+#'   the package-level `.qf$qfeatures` object
+#' @param step_number `int` number of the step
+#' @param type A `character(1)` providing the name of the step.
+#' @param featuresType which type of features will be joined
+#'
+#' @rdname INTERNAL_add_assays_to_global_rv
+#' @keywords internal
+#'
+#' @return (NULL) does not return anything but will add the assays to the
+#'   package-level `.qf$qfeatures` object
+#' @importFrom QFeatures addAssayLink
+#' @importFrom shinyalert shinyalert
+#'
+add_joined_assay_to_global_rv <- function(processed_qfeatures, step_number, featuresType, type) {
+  name <- names(processed_qfeatures)[length(processed_qfeatures)]
+  new_name <- paste0(featuresType, "_",
+    strsplit(name,"_QFeaturesGUI#",fixed =TRUE)[[1]][[1]],
+    "_(QFeaturesGUI#", step_number, ")",
+    "_", type, "_", step_number
+    )
+  .qf$qfeatures[[new_name]] <- processed_qfeatures[[name]]
+  from_pattern <- paste0("QFeaturesGUI#", step_number - 1, "\\)")
+  from_names <- grep(from_pattern, names(.qf$qfeatures), value = TRUE)
+  .qf$qfeatures <- addAssayLink(
+    .qf$qfeatures,
+    from = from_names,
+    to = new_name
+  )
+  
+  n <- length(processed_qfeatures)
+  shinyalert(
+    title = "Step saved",
+    text = "1 set added to QFeatures.",
+    type = "success", 
+    confirmButtonCol = "#3c8dbc",
+    closeOnClickOutside = TRUE
+  )
+  
+}
+
+#' Create tooltip
+#'
+#' @description
+#' A wrapper that creates a Bootstrap 3 compatible tooltip.
+#'
+#' @param trigger A tag or character(1) to which
+#'   the tooltip is attached. Can be any Shiny UI element such as a
+#'   actionButton, tags$span, or
+#'   plain text. When character(1) is provided, an info icon is
+#'   appended to the text.
+#' @param tooltipText character(1) The text to display inside the
+#'   tooltip popup.
+#' @param placement character(1) The placement of the tooltip relative
+#'   to the trigger element. One of "right" (default), "left",
+#'   "top", or "bottom".
+#' @param icon character(1) The FontAwesome icon class to use as the
+#'   tooltip indicator when trigger is a character(1).
+#'   Defaults to "fa-info-circle". Ignored if trigger is a tag.
+#'
+#' @return A tagList containing the trigger element with
+#'   the tooltip attached.
+#'
+#' @importFrom shiny tags tagAppendAttributes
+#'
+#' @examples
+#' ## Plain text trigger with info icon
+#' bs3Tooltip(
+#'     trigger = "assayData",
+#'     tooltipText = paste0(
+#'         "A data.frame or any object that can be coerced into a data.frame, ",
+#'         "holding the quantitative assay."
+#'     )
+#' )
+#'
+#' ## Button trigger
+#' bs3Tooltip(
+#'     trigger = shiny::actionButton("btn", "Import"),
+#'     tooltipText = "Click to import the data",
+#'     placement = "top"
+#' )
+#'
+#' @rdname INTERNAL_bs3Tooltip
+#' @keywords internal
+#' 
+bs3Tooltip <- function(trigger,
+                       tooltipText,
+                       placement = c("right", "left", "top", "bottom"),
+                       icon = "fa-info-circle") {
+  stopifnot(
+    is.character(tooltipText), length(tooltipText) == 1L,
+    is.character(icon), length(icon) == 1L
+  )
+  placement <- match.arg(placement)
+  
+  if (is.character(trigger)) {
+    stopifnot(length(trigger) == 1L)
+    trigger <- tags$span(
+      trigger,
+      tags$i(
+        class = paste("fa", icon),
+        style = "cursor: pointer; margin-left: 5px;"
+      )
+    )
+  } else if (!inherits(trigger, "shiny.tag")) {
+    stop("'trigger' must be a character(1) or a Shiny tag object.")
+  }
+  
+  existing_style <- trigger$attribs$style
+  merged_style <- if (is.null(existing_style) || !nzchar(existing_style)) {
+    "cursor: pointer;"
+  } else {
+    paste0(sub(";?\\s*$", "", existing_style), "; cursor: pointer;")
+  }
+  
+  htmltools::tagList(
+    htmltools::singleton(
+      shiny::tags$script(shiny::HTML(
+        "$(function() {
+             $('body').tooltip({
+               selector: '[data-toggle=\"tooltip\"]',
+               container: 'body'
+             });
+           });"
+      ))
+    ),
+    tagAppendAttributes(
+      trigger,
+      title = tooltipText,
+      `data-toggle` = "tooltip",
+      `data-placement` = placement,
+      style = merged_style
+    )
+  )
 }

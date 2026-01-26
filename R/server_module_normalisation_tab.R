@@ -5,64 +5,122 @@
 #' @rdname INTERNAL_server_module_normalisation_tab
 #' @keywords internal
 #'
-#' @importFrom shiny moduleServer updateSelectInput observeEvent eventReactive is.reactive
+#' @importFrom shiny moduleServer updateSelectInput observeEvent reactive is.reactive
 #' @importFrom MultiAssayExperiment getWithColData
 #'
-server_module_normalisation_tab <- function(id, step_number) {
+server_module_normalisation_tab <- function(id, step_number, step_rv, parent_rv) {
     moduleServer(id, function(input, output, session) {
-        assays_to_process <- eventReactive(input$reload, {
+        pattern <- paste0("_(QFeaturesGUI#", step_number - 1, ")")
+
+        step_ready <- reactive({
+            if (!is.null(parent_rv)) req(parent_rv() > 0L)
+            TRUE
+        })
+
+        parent_assays <- reactive({
+            req(step_ready())
             error_handler(page_assays_subset,
                 component_name = "Page assays subset",
-                qfeatures = global_rv$qfeatures,
-                pattern = paste0("_(QFeaturesGUI#", step_number - 1, ")")
+                qfeatures = .qf$qfeatures,
+                pattern = pattern
             )
         })
 
-        processed_assays <- reactive({
-            req(assays_to_process())
+        clicked <- reactiveVal(FALSE)
+        observeEvent(input$apply_normalisation, {
+            clicked(TRUE)
+        })
+
+        output$post_density_message <- renderText({
+            if (!clicked()) {
+                "The post-normalisation plot will be displayed once you apply normalisation."
+            } else {
+                ""
+            }
+        })
+
+        processed_assays <- eventReactive(input$apply_normalisation, {
+            req(parent_assays())
+            with_task_loader(
+                caption = "Applying normalisation and generating post-normalisation densities",
+                expr = {
+                    error_handler(
+                        normalisation_qfeatures,
+                        component_name = "Normalisation",
+                        qfeatures = parent_assays(),
+                        method = input$method
+                    )
+                }
+            )
+        })
+
+        selected_color <- reactive({
+            req(input$color)
+            if (identical(input$color, "NULL")) {
+                return(NULL)
+            }
+            input$color
+        })
+
+        output$density_plot_pre <- renderPlotly({
+            req(parent_assays())
             error_handler(
-                normalisation_qfeatures,
-                component_name = "Normalisation",
-                qfeatures = assays_to_process(),
-                method = input$method
+                density_by_sample_plotly,
+                component_name = "Pre-normalisation density plot",
+                qfeatures = parent_assays(),
+                color = selected_color(),
+                title = "Pre-normalisation density"
             )
         })
 
-        output$density_plot <- renderPlotly({
+        output$density_plot_post <- renderPlotly({
             req(processed_assays())
-            density_by_sample_plotly(
+            error_handler(
+                density_by_sample_plotly,
+                component_name = "Post-normalisation density plot",
                 qfeatures = processed_assays(),
-                color = input$color
+                color = selected_color(),
+                title = "Post-normalisation density"
             )
-            # error_handler(
-            #     density_by_sample_plotly,
-            #     component_name = "Density by sample plotly",
-            #     qfeatures = processed_assays(),
-            #     color = input$color)
         })
 
         observe({
-            req(processed_assays())
+            req(parent_assays())
+            choices <- c("NULL", colnames(colData(parent_assays())))
+            selected <- "NULL"
+            if (!is.null(input$color) && input$color %in% choices) {
+                selected <- input$color
+            }
             updateSelectInput(session,
                 "color",
-                choices = colnames(colData(processed_assays()))
+                choices = choices,
+                selected = selected
             )
         })
 
-        observeEvent(input$export, {
-            req(processed_assays())
-            loading(paste("Be aware that this operation",
-                "can be quite time consuming for large data sets",
-                sep = " "
-            ))
-            error_handler(
-                add_assays_to_global_rv,
-                component_name = "Add assays to global_rv",
-                processed_qfeatures = processed_assays(),
-                step_number = step_number,
-                type = "normalisation"
-            )
-            removeModal()
-        })
+        observeEvent(input$export,
+            {
+                req(processed_assays())
+                with_task_loader(
+                    caption = paste(
+                        "Be aware that this operation",
+                        "can be quite time consuming for large data sets"
+                    ),
+                    expr = {
+                        error_handler(
+                            add_assays_to_global_rv,
+                            component_name = "Add assays to global_rv",
+                            processed_qfeatures = processed_assays(),
+                            step_number = step_number,
+                            type = "normalisation"
+                        )
+                        step_rv(step_rv() + 1L)
+                        global_rv$code_lines[[paste0("Initialization_names_",step_number)]] <- codeGeneratorInitialization(qf = .qf$qfeatures, step_number = step_number)
+                        global_rv$code_lines[[paste0("normalisation_", step_number)]] <- codeGeneratorNormalisation(method = input$method, step_number = step_number)
+                    }
+                )
+            },
+            ignoreInit = TRUE
+        )
     })
 }

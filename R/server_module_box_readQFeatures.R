@@ -10,78 +10,100 @@
 #'
 #' @importFrom shiny is.reactive reactive moduleServer observe eventReactive updateSelectInput removeModal downloadHandler
 #' @importFrom DT renderDataTable datatable
-#' @importFrom QFeatures readQFeatures
+#' @importFrom QFeatures readQFeatures setQFeaturesType getQFeaturesType
 #' @importFrom QFeatures zeroIsNA
 #' @importFrom methods as
-#' @import SingleCellExperiment
-#' @import SummarizedExperiment
-#' @import MultiAssayExperiment
+#' @importFrom utils zip
+#' @importFrom shinyjs enable show
+#' @importFrom SingleCellExperiment SingleCellExperiment
+#' @importFrom SummarizedExperiment SummarizedExperiment
+#' @importFrom MultiAssayExperiment MultiAssayExperiment ExperimentList
+#' @importFrom shinydashboard infoBox renderInfoBox
+#' @importFrom rmarkdown render
 #'
 box_readqfeatures_server <- function(id, input_table, sample_table) {
     stopifnot(is.reactive(input_table))
     stopifnot(is.reactive(sample_table))
-
     moduleServer(id, function(input, output, session) {
+        observe({
+            if (!is.null(input_table())) {
+                shinyjs::enable("convert")
+            }
+        })
         observeEvent(input$convert, {
-            loading(paste("Be aware that this operation",
-                "can be quite time consuming for large data sets",
-                sep = " "
-            ))
-            if (is.data.frame(sample_table())) {
-                global_rv$qfeatures <- error_handler(
-                    QFeatures::readQFeatures,
-                    component_name = "QFeatures converting (readQFeatures)",
-                    assayData = input_table(),
-                    colData = sample_table(),
-                    runCol = input$run_col,
-                    removeEmptyCols = input$removeEmptyCols,
-                    verbose = FALSE
-                )
-            } else {
-                global_rv$qfeatures <- error_handler(
-                    QFeatures::readQFeatures,
-                    component_name = "QFeatures converting (readQFeatures)",
-                    assayData = input_table(),
-                    runCol = input$run_col,
-                    quantCols = input$quant_cols,
-                    removeEmptyCols = input$removeEmptyCols,
-                    verbose = FALSE
-                )
-            }
-            if (input$zero_as_NA && length(global_rv$qfeatures) > 0) {
-                global_rv$qfeatures <- error_handler(
-                    QFeatures::zeroIsNA,
-                    component_name = "QFeatures converting (zero_as_NA)",
-                    object = global_rv$qfeatures,
-                    i = seq_along(global_rv$qfeatures)
-                )
-            }
-            if (input$singlecell) {
-                el <- ExperimentList(lapply(
-                    experiments(global_rv$qfeatures),
-                    as, "SingleCellExperiment"
-                ))
-                experiments(global_rv$qfeatures) <- el
-            }
-            # The following code is a workaround
-            # to fix keep track of the steps in the QFeatures object
-            # The idea is that each page will be assigned a number,
-            # and will use the assays that have the number - 1 in the name.
-            # And then add assays with the number of the page in the QFeatures
-            for (i in seq_along(global_rv$qfeatures)) {
-                names(global_rv$qfeatures)[i] <- paste0(
-                    names(global_rv$qfeatures)[i],
-                    "_(QFeaturesGUI#0)_initial_import"
-                )
-            }
-            removeModal()
+            shinyjs::show("qfeatures_preview_box")
+            shinyjs::show("download_qfeatures_object")
+        })
+        qfeatures <- eventReactive(input$convert, {
+            with_task_loader(
+                caption = "Be aware that the conversion into QFeatures object can be quite time consuming for large datasets",
+                expr = {
+                    if (is.data.frame(sample_table())) {
+                        colData <- sample_table()
+                        quantCols <- NULL
+                    } else {
+                        colData <- NULL
+                        quantCols <- input$quant_cols
+                    }
+
+                    if (input$run_col != "NULL") {
+                        runCol <- input$run_col
+                    } else {
+                        runCol <- NULL
+                    }
+                    qfeatures <- error_handler(
+                        QFeatures::readQFeatures,
+                        component_name = "QFeatures converting (readQFeatures)",
+                        assayData = input_table(),
+                        colData = colData,
+                        runCol = runCol,
+                        quantCols = quantCols,
+                        removeEmptyCols = input$removeEmptyCols,
+                        verbose = FALSE
+                    )
+                    if (input$zero_as_NA && length(qfeatures) > 0) {
+                        qfeatures <- error_handler(
+                            QFeatures::zeroIsNA,
+                            component_name = "QFeatures converting (zero_as_NA)",
+                            object = qfeatures,
+                            i = seq_along(qfeatures)
+                        )
+                    }
+                    if (input$logTransform) {
+                        qfeatures <- error_handler(
+                            QFeatures::logTransform,
+                            component_name = "Log transforming QFeatures",
+                            object = qfeatures,
+                            i = seq_along(qfeatures),
+                            base = 2,
+                            name = paste0(names(qfeatures), "_logTransformed")
+                        )
+                    }
+                    if (input$singlecell) {
+                        qfeatures <- setQFeaturesType(qfeatures, type = "scp")
+                    }
+                    # The following code is a workaround
+                    # to fix keep track of the steps in the QFeatures object
+                    # The idea is that each page will be assigned a number,
+                    # and will use the assays that have the number - 1 in the name.
+                    # And then add assays with the number of the page in the QFeatures
+                    for (i in seq_along(qfeatures)) {
+                        names(qfeatures)[i] <- paste0(
+                            names(qfeatures)[i],
+                            "_(QFeaturesGUI#0)_initial_import"
+                        )
+                    }
+                    shinyjs::show("selected_assay_preview_box")
+                    qfeatures
+                }
+            )
         })
 
         observe({
-            input$reload_button
             updateSelectInput(session,
                 "run_col",
-                choices = colnames(input_table())
+                choices = c("NULL", colnames(input_table())),
+                selected = "NULL"
             )
             updateSelectInput(session,
                 "quant_cols",
@@ -90,13 +112,18 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
         })
 
         qfeatures_df <- reactive({
+            req(qfeatures())
             error_handler(
                 qfeatures_to_df,
                 component_name = "qfeatures_to_df",
-                page_assays_subset(global_rv$qfeatures, "_(QFeaturesGUI#0)")
+                page_assays_subset(qfeatures(), "_(QFeaturesGUI#0)")
             )
         })
 
+        output$type_of_qfeatures <- renderInfoBox({
+            req(qfeatures())
+            infoBox("Type of QFeatures :", getQFeaturesType(qfeatures()), fill = TRUE, color = "light-blue")
+        })
         output$qfeatures_dt <- DT::renderDataTable({
             DT::datatable(qfeatures_df(),
                 extensions = "FixedColumns",
@@ -115,7 +142,7 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
             if (!is.null(input$qfeatures_dt_rows_selected)) {
                 row <- input$qfeatures_dt_rows_selected
                 DT::datatable(
-                    data.frame(assay(global_rv$qfeatures[[row]])),
+                    data.frame(assay(qfeatures()[[row]])),
                     extensions = "FixedColumns",
                     options = list(
                         searching = FALSE,
@@ -127,5 +154,94 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
                 )
             }
         })
+        observeEvent(input$convert, {
+            global_rv$code_lines$create_qfeatures <- code_generator_read_qfeatures(
+                input_table,
+                sample_table,
+                qfeatures(),
+                input$run_col,
+                input$removeEmptyCols,
+                input$quant_cols,
+                input$logTransform,
+                input$zero_as_NA,
+                input$singlecell
+            )
+        })
+        output$downloadQFeatures <- downloadHandler(
+            filename = function() {
+                "qfeatures_object.zip"
+            },
+            content = function(file) {
+                with_task_loader(
+                    caption = "Preparing download, can be quite time consuming",
+                    expr = {
+                        tmpdir <- tempdir()
+                        final_qfeatures <- qfeatures()
+                        names(final_qfeatures) <- remove_QFeaturesGUI(names(final_qfeatures))
+                        rds_file <- file.path(tmpdir, "initial_QFeatures.rds")
+                        saveRDS(final_qfeatures, rds_file)
+                        rmd_file <- file.path(tmpdir, "sessionInfo.Rmd")
+                        SI_file <- file.path(tmpdir, "initial_QFeatures_sessionInfo.html")
+                        r_file <- file.path(tmpdir, "importQFeatures_script.R")
+                        writeLines(
+                            c(
+                                "---",
+                                "title : \"SessionInfo\"",
+                                "output: html_document",
+                                "---",
+                                "",
+                                "```{r}",
+                                "sessionInfo()",
+                                "```"
+                            ),
+                            rmd_file
+                        )
+                        rmarkdown::render(
+                            rmd_file,
+                            output_file = SI_file,
+                            quiet = TRUE
+                        )
+                        writeLines(
+                            c(
+                                "# Reproducible R script",
+                                paste0("# Generated on: ", Sys.time()),
+                                "",
+                                "library(QFeatures)\n"
+                            ),
+                            r_file
+                        )
+                        write(
+                            c(
+                                global_rv$code_lines$read_input_data
+                            ),
+                            file = r_file,
+                            append = TRUE
+                        )
+                        if (!is.null(sample_table())) {
+                            write(
+                                c(
+                                    global_rv$code_lines$read_sample_data
+                                ),
+                                file = r_file,
+                                append = TRUE
+                            )
+                        }
+                        write(
+                            c(
+                                "# Create QFeatures object",
+                                global_rv$code_lines$create_qfeatures
+                            ),
+                            file = r_file,
+                            append = TRUE
+                        )
+                        utils::zip(
+                            zipfile = file,
+                            files = c(rds_file, SI_file, r_file),
+                            flags = "-j"
+                        )
+                    }
+                )
+            }
+        )
     })
 }

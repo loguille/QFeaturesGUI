@@ -8,73 +8,94 @@
 #' @rdname INTERNAL_server_dynamic_workflow
 #' @keywords internal
 #'
-#' @importFrom shiny observeEvent renderUI
+#' @importFrom shiny observeEvent renderUI outputOptions
 #' @importFrom shinydashboard tabItem tabItems
-#' @importFrom htmltools h2
+#' @importFrom htmltools h2 div p tags
 #'
 
 server_dynamic_workflow <- function(input, output, session) {
-    observeEvent(global_rv$workflow_config, {
-        output$all_tabs <- renderUI({
-            static_tabs <- list(
-                tabItem(
-                    tabName = "import_tab",
-                    import_tab()
-                ),
-                tabItem(
-                    tabName = "workflow_config_tab",
-                    interface_module_workflow_config_tab("workflow_config")
-                ),
-                tabItem(
-                    tabName = "summary_tab",
-                    interface_module_summary_tab("summary_tab")
-                )
-            )
+    version_counter <- local(0L)
 
-            dynamic_tabs <- lapply(seq_along(global_rv$workflow_config), function(i) {
-                tabItem(
-                    tabName = paste0("step_", i),
-                    if (global_rv$workflow_config[[i]] == "Samples Filtering") {
-                        interface_module_samples_filtering_tab(
-                            paste0("samples_filtering_", i)
-                        )
-                    } else if (global_rv$workflow_config[[i]] == "Features Filtering") {
-                        interface_module_features_filtering_tab(
-                            paste0("features_filtering_", i)
-                        )
-                    } else if (global_rv$workflow_config[[i]] == "Log Transformation") {
-                        interface_module_log_transform_tab(
-                            paste0("log_transform_", i)
-                        )
-                    } else if (global_rv$workflow_config[[i]] == "Normalisation") {
-                        interface_module_normalisation_tab(
-                            paste0("normalisation_", i)
-                        )
-                    }
-                )
-            })
+    observe({
+        version_counter <<- version_counter + 1L
+        v <- version_counter
 
-            do.call(tabItems, c(static_tabs, dynamic_tabs))
-        })
+        step_rvs <- lapply(
+            seq_along(global_rv$workflow_config),
+            function(i) reactiveVal(0)
+        )
+        global_rv$step_rvs <- step_rvs
 
         lapply(seq_along(global_rv$workflow_config), function(i) {
-            if (global_rv$workflow_config[[i]] == "Samples Filtering") {
-                server_module_samples_filtering_tab(paste0("samples_filtering_", i),
-                    step_number = i
-                )
-            } else if (global_rv$workflow_config[[i]] == "Features Filtering") {
-                server_module_features_filtering_tab(paste0("features_filtering_", i),
-                    step_number = i
-                )
-            } else if (global_rv$workflow_config[[i]] == "Log Transformation") {
-                server_module_log_transform_tab(paste0("log_transform_", i),
-                    step_number = i
-                )
-            } else if (global_rv$workflow_config[[i]] == "Normalisation") {
-                server_module_normalisation_tab(paste0("normalisation_", i),
-                    step_number = i
-                )
-            }
+            parent_rv <- if (i == 1) NULL else step_rvs[[i - 1]]
+
+            # Versioned module IDs ensure each reset creates a fresh namespace.
+            # Old module instances survive but write to orphaned IDs no longer
+            # present in the UI, so their stale state is completely harmless.
+            module_id <- switch(global_rv$workflow_config[[i]],
+                "Sample Filtering"          = paste0("sampleFiltering_", i, "_v", v),
+                "Feature Filtering"         = paste0("featureFiltering_", i, "_v", v),
+                "Normalisation"             = paste0("normalisation_", i, "_v", v),
+                "Zero to NA"                = paste0("zeroToNA_", i, "_v", v),
+                "Log Transform"             = paste0("logTransform_", i, "_v", v),
+                "Imputation"                = paste0("imputation_", i, "_v", v),
+                "Filtering NAs by Features" = paste0("missingValuesFeatures_", i, "_v", v),
+                "Filtering NAs by Samples"  = paste0("missingValuesSamples_", i, "_v", v),
+                "Aggregation"               = paste0("aggregation_",i,"_v",v),
+                "Join"                      = paste0("join_",i,"_v",v)
+            )
+
+            output[[paste0("dynamic_step_ui_", i)]] <- renderUI({
+                if (!is.null(parent_rv) && parent_rv() == 0L) {
+                    div(
+                        style = "text-align: center; padding: 60px 20px;",
+                        tags$i(
+                            class = "fa fa-lock",
+                            style = "font-size: 3em; color: #aaa; margin-bottom: 20px;"
+                        ),
+                        h2("Step not available", style = "color: #555;"),
+                        p(
+                            style = "font-size: 1.1em; color: #777;",
+                            paste0(
+                                "Please save Step ", i - 1,
+                                " \u2014 ", global_rv$workflow_config[[i - 1]],
+                                " \u2014 before proceeding to this step."
+                            )
+                        )
+                    )
+                } else {
+                    switch(global_rv$workflow_config[[i]],
+                        "Sample Filtering"          = interface_module_filtering_tab(module_id, type = "samples"),
+                        "Feature Filtering"         = interface_module_filtering_tab(module_id, type = "features"),
+                        "Normalisation"             = interface_module_normalisation_tab(module_id),
+                        "Zero to NA"                = interface_module_zero_to_na_tab(module_id),
+                        "Log Transform"             = interface_module_log_transform_tab(module_id),
+                        "Imputation"                = interface_module_impute_tab(module_id),
+                        "Filtering NAs by Features" = interface_module_missing_values_tab(module_id, type = "features"),
+                        "Filtering NAs by Samples"  = interface_module_missing_values_tab(module_id, type = "samples"),
+                        "Aggregation"               = interface_module_aggregation_tab(module_id),
+                        "Join"                      = interface_module_join_tab(module_id)
+                    )
+                }
+            })
+            # Disable suspend-when-hidden so the UI renders eagerly on the
+            # first flush, ensuring selectInputs exist before updateSelectInput
+            # messages arrive from step module observers.
+            outputOptions(output, paste0("dynamic_step_ui_", i), suspendWhenHidden = FALSE)
+
+            # Call the corresponding server module
+            switch(global_rv$workflow_config[[i]],
+                "Sample Filtering"          = server_module_filtering_tab(module_id, step_number = i, step_rv = step_rvs[[i]], parent_rv = parent_rv, type = "samples"),
+                "Feature Filtering"         = server_module_filtering_tab(module_id, step_number = i, step_rv = step_rvs[[i]], parent_rv = parent_rv, type = "features"),
+                "Normalisation"             = server_module_normalisation_tab(module_id, step_number = i, step_rv = step_rvs[[i]], parent_rv = parent_rv),
+                "Zero to NA"                = server_module_zero_to_na_tab(module_id, step_number = i, step_rv = step_rvs[[i]], parent_rv = parent_rv),
+                "Log Transform"             = server_module_log_transform_tab(module_id, step_number = i, step_rv = step_rvs[[i]], parent_rv = parent_rv),
+                "Imputation"                = server_module_impute_tab(module_id, step_number = i, step_rv = step_rvs[[i]], parent_rv = parent_rv),
+                "Filtering NAs by Features" = server_module_missing_values_tab(module_id, step_number = i, type = "features", step_rv = step_rvs[[i]], parent_rv = parent_rv),
+                "Filtering NAs by Samples"  = server_module_missing_values_tab(module_id, step_number = i, type = "samples", step_rv = step_rvs[[i]], parent_rv = parent_rv),
+                "Aggregation"               = server_module_aggregation_tab(module_id, step_number = i, step_rv = step_rvs[[i]], parent_rv = parent_rv),
+                "Join"                      = server_module_join_tab(module_id, step_number = i, step_rv = step_rvs[[i]], parent_rv = parent_rv)
+            )
         })
     })
 }

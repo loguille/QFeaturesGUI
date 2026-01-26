@@ -9,7 +9,9 @@
 #'
 #' @importFrom shiny tagList selectInput checkboxInput actionButton downloadButton NS
 #' @importFrom shinydashboardPlus box
+#' @importFrom shinydashboard infoBoxOutput
 #' @importFrom DT dataTableOutput
+#' @importFrom shinyjs disabled hidden
 #'
 box_readqfeatures_ui <- function(id) {
     tagList(
@@ -20,28 +22,35 @@ box_readqfeatures_ui <- function(id) {
             solidHeader = TRUE,
             collapsible = TRUE,
             box(
-                title = "Parameters",
+                title = "Settings",
                 status = "primary",
                 width = 12,
                 solidHeader = FALSE,
                 collapsible = TRUE,
                 id = NS(id, "parameters"),
-                actionButton(
-                    inputId = NS(id, "reload_button"),
-                    "Reload",
-                    icon = icon("rotate-right"),
-                    width = "100%",
-                    class = "load-button",
-                    style = "font-size: 14px;"
-                ),
                 selectInput(
                     inputId = NS(id, "run_col"),
-                    "Run/Batch column :",
-                    choices = NULL
+                    span(
+                         bs3Tooltip(
+                           trigger = "Run/Batch column:",
+                           tooltipText =  "For the multi-set case, the assayData column that contains\
+                           the runs/batches.",
+                           placement = "bottom"
+                        )
+                    ),
+                    choices = NULL,
+                    selected = "NULL"
                 ),
                 selectInput(
                     inputId = NS(id, "quant_cols"),
-                    "Quantitative column : (Only relevant without sample table)",
+                    span(
+                         bs3Tooltip(
+                            trigger = "Quantitative column:",
+                            tooltipText = "Only relevant without a colData table. The column(s) of the \
+                            assayData that contain the quantitative data.",
+                            placement = "bottom"
+                         )
+                    ),
                     choices = NULL,
                     multiple = TRUE
                 ),
@@ -51,40 +60,74 @@ box_readqfeatures_ui <- function(id) {
                     value = FALSE
                 ),
                 checkboxInput(
+                    inputId = NS(id, "logTransform"),
+                    label = "Log transform data",
+                    value = TRUE
+                ),
+                checkboxInput(
                     inputId = NS(id, "zero_as_NA"),
                     label = "Convert zeros to NA",
                     value = TRUE
                 ),
                 checkboxInput(
                     inputId = NS(id, "singlecell"),
-                    label = "Single cell data",
+                    label = "Single-cell data",
                     value = FALSE
                 ),
-                actionButton(
-                    inputId = NS(id, "convert"),
-                    "Convert to a QFeatures object",
-                    class = "add-button no-bottom-margin",
-                    width = "100%",
-                    style = "font-size: 14px;"
+                disabled(
+                    actionButton(
+                        inputId = NS(id, "convert"),
+                        "Convert to a QFeatures object",
+                        class = "add-button no-bottom-margin",
+                        width = "100%"
+                    )
                 )
             ),
-            box(
-                title = "QFeatures Preview",
-                status = "primary",
-                width = 12,
-                solidHeader = FALSE,
-                collapsible = TRUE,
-                id = NS(id, "qfeatures_preview"),
-                DT::dataTableOutput(NS(id, "qfeatures_dt"))
+            hidden(
+                div(
+                    id = NS(id, "qfeatures_preview_box"),
+                    box(
+                        title = "QFeatures Preview",
+                        status = "primary",
+                        width = 12,
+                        solidHeader = FALSE,
+                        collapsible = TRUE,
+                        id = NS(id, "qfeatures_preview"),
+                        infoBoxOutput(NS(id, "type_of_qfeatures")),
+                        DT::dataTableOutput(NS(id, "qfeatures_dt"))
+                    )
+                )
             ),
-            box(
-                title = "Selected Assay Preview",
-                status = "primary",
-                width = 12,
-                solidHeader = FALSE,
-                collapsible = TRUE,
-                id = NS(id, "assay_preview"),
-                DT::dataTableOutput(NS(id, "assay_table"))
+            hidden(
+                div(
+                    id = NS(id, "selected_assay_preview_box"),
+                    box(
+                        title = "Selected Assay Preview",
+                        status = "primary",
+                        width = 12,
+                        solidHeader = FALSE,
+                        collapsible = TRUE,
+                        id = NS(id, "assay_preview"),
+                        DT::dataTableOutput(NS(id, "assay_table"))
+                    )
+                )
+            ),
+            hidden(
+                    div(
+                      id =  NS(id, "download_qfeatures_object"),
+                         bs3Tooltip(
+                           trigger = shiny::downloadButton(
+                             outputId = NS(id, "downloadQFeatures"),
+                             "Download QFeatures object",
+                             class = "load-button",
+                             style = "width: 100%;"
+                           ),
+                           tooltipText = "Download a zip file containing the QFeatures object, \
+                           the script used to generate this object, and the R sessionInfo \
+                           containing the packages and versions used for the script.",
+                           placement = "top"
+                         )
+                    )    
             )
         )
     )

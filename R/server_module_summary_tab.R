@@ -13,11 +13,18 @@
 
 server_module_summary_tab <- function(id) {
     moduleServer(id, function(input, output, session) {
+        # Reactive that subscribes to every step's reactiveVal.
+        # Re-fires whenever any step is saved, invalidating all outputs below.
+        any_step_saved <- reactive({
+            lapply(global_rv$step_rvs, function(rv) rv())
+        })
+
         qfeatures_df <- reactive({
+            any_step_saved()
             error_handler(
                 qfeatures_to_df,
                 component_name = "qfeatures_to_df",
-                global_rv$qfeatures
+                .qf$qfeatures
             )
         })
 
@@ -36,10 +43,11 @@ server_module_summary_tab <- function(id) {
         })
 
         output$assay_table <- DT::renderDataTable({
+            any_step_saved()
             if (!is.null(input$qfeatures_dt_rows_selected)) {
                 row <- input$qfeatures_dt_rows_selected
                 DT::datatable(
-                    data.frame(assay(global_rv$qfeatures[[row]])),
+                    data.frame(assay(.qf$qfeatures[[row]])),
                     extensions = "FixedColumns",
                     options = list(
                         searching = FALSE,
@@ -53,24 +61,77 @@ server_module_summary_tab <- function(id) {
         })
 
         output$qfeatures_plot <- renderPlotly({
-            if (length(global_rv$qfeatures) > 0) {
-                empty_qfeatures <- global_rv$qfeatures[1, ]
+            any_step_saved()
+            if (length(.qf$qfeatures) > 0) {
+                empty_qfeatures <- .qf$qfeatures[1, ]
                 names(empty_qfeatures) <- remove_QFeaturesGUI(names(empty_qfeatures))
                 plot(empty_qfeatures,
                     interactive = TRUE
                 )
             }
         })
-
+        
         output$download_qfeatures <- downloadHandler(
-            filename = function() {
-                "qfeatures_object.rds"
-            },
-            content = function(file) {
-                final_qfeatures <- global_rv$qfeatures
+          filename = function() {
+            "qfeatures_object.zip"
+          },
+          content = function(file) {
+            with_task_loader(
+              caption = "Preparing download, can be quite time consuming",
+              expr = {
+                tmpdir <- tempdir()
+                final_qfeatures <- .qf$qfeatures
                 names(final_qfeatures) <- remove_QFeaturesGUI(names(final_qfeatures))
-                saveRDS(final_qfeatures, file)
-            }
+                rds_file <- file.path(tmpdir, "final_QFeatures.rds")
+                saveRDS(final_qfeatures, rds_file)
+                rmd_file <- file.path(tmpdir, "sessionInfo.Rmd")
+                SI_file <- file.path(tmpdir, "final_QFeatures_sessionInfo.html")
+                r_file <- file.path(tmpdir, "processQFeatures_script.R")
+                writeLines(
+                  c(
+                    "---",
+                    "title : \"SessionInfo\"",
+                    "output: html_document",
+                    "---",
+                    "",
+                    "```{r}",
+                    "sessionInfo()",
+                    "```"
+                  ),
+                  rmd_file
+                )
+                rmarkdown::render(
+                  rmd_file,
+                  output_file = SI_file,
+                  quiet = TRUE
+                )
+                writeLines(
+                  c(
+                    "# Reproducible R script",
+                    paste0("# Generated on: ", Sys.time()),
+                    "",
+                    "####################################\n######### Package loading ##########\n####################################\nlibrary(QFeatures)\n",
+                    "####################################\n########## Load dataset ############\n####################################\n## Replace 'myDataset' with the path towards your initial Qfeatures .rds file.\n## Or directly assign your initial QFeatures object to qf.\nqf <- readRDS('myDataset') \n"
+                  ),
+                  r_file
+                )
+                for(i in global_rv$code_lines){
+                  write(
+                    c(
+                      i
+                    ),
+                    file = r_file,
+                    append = TRUE
+                  )
+                }
+                utils::zip(
+                  zipfile = file,
+                  files = c(rds_file, SI_file, r_file),
+                  flags = "-j"
+                )
+              }
+            )
+          }
         )
     })
 }

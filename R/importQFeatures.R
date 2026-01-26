@@ -1,32 +1,32 @@
-#' @title A shiny app to import QFeatures objects, some optional pre-processing steps.
+#' @title A shiny app to import QFeatures objects.
 #'
-#' @description importQFeatures is a simple graphical interface to import bulk and single-cell proteomic data.
-#' The app use the \code{\link[QFeatures]{readQFeatures}} function from the QFeatures package to convert simple table (single or multiple, csv or tsv) to a QFeatures object.
-#' The app is divided into mutliple sections:
-#' \itemize{
-#' \item The first section (Import) of the app allow to convert tables to a QFeatures object.
-#' \item The second section (Pre-processing) of the app allow to perform some optional pre-processing steps.
-#' }
-#' @param colData A dataframe that contains the sample table.
-#' @param assayData A dataframe that contains the input table.
+#' @description importQFeatures is a simple graphical interface to import bulk and single-cell proteomics data.
+#' The app uses the \code{\link[QFeatures]{readQFeatures}} function from the QFeatures package to convert simple tables (single or multiple, CSV or TSV) to a QFeatures object.
+#' The app allows users to convert tables to a QFeatures object.
 #'
-#' @return Return the "importQFeatures" shiny app object.
+#' @param colData A data frame that contains the sample table.
+#' @param assayData A data frame that contains the input table.
+#' @param maxSize An integer that changes the shiny.maxRequestSize value, in MB.
+#'
+#' @return The "importQFeatures" Shiny app object.
 #' @export
-#' @importFrom shiny shinyApp runApp
+#' @importFrom shiny shinyApp runApp onStop
 #'
 #' @examples
 #' library(QFeaturesGUI)
 #'
 #' data("sampleTable")
 #' data("inputTable")
-#' app <- importQFeatures(colData = sampleTable, assayData = inputTable)
+#' app <- importQFeatures(colData = sampleTable, assayData = inputTable, maxSize = 100)
 #'
 #' if (interactive()) {
 #'     shiny::runApp(app)
 #' }
 #'
-importQFeatures <- function(colData = NULL, assayData = NULL) {
-    ui <- build_ui()
-    server <- build_server(colData, assayData)
+importQFeatures <- function(colData = NULL, assayData = NULL, maxSize = 1000) {
+    oldOptions <- options(shiny.maxRequestSize = maxSize * 1024^2)
+    onStop(function() options(oldOptions))
+    ui <- build_import_ui()
+    server <- build_import_server(colData, assayData)
     shinyApp(ui = ui, server = server)
 }

@@ -12,21 +12,43 @@
 #' @importFrom shiny icon
 #'
 server_sidebar <- function(input, output, session) {
-    output$sidebar_workflow <- renderMenu({
-        menuItem(
-            paste0(
-                "Pre-processing",
-                " (",
-                length(global_rv$workflow_config), " Steps)"
-            ),
-            tabName = "workflow_tab",
-            icon = shiny::icon("3"),
-            lapply(seq_along(global_rv$workflow_config), function(index) {
+    output$dynamic_sidebar <- renderMenu({
+        n_steps <- length(global_rv$workflow_config)
+        step_rvs <- global_rv$step_rvs
+
+        if (n_steps > 0) {
+            step_items <- lapply(seq_len(n_steps), function(i) {
+                is_available <- i == 1 ||
+                    (!is.null(step_rvs) &&
+                        length(step_rvs) >= (i - 1) &&
+                        step_rvs[[i - 1]]() > 0L)
+                is_saved <- !is.null(step_rvs) &&
+                    length(step_rvs) >= i &&
+                    step_rvs[[i]]() > 0L
+
+                step_icon <- if (!is_available) {
+                    icon("lock", style = "color: #aaa;")
+                } else if (is_saved) {
+                    icon("check", style = "color: #00a65a;")
+                } else {
+                    icon("clock", style = "color: #f39c12;")
+                }
+
                 menuSubItem(
-                    text = global_rv$workflow_config[[index]],
-                    tabName = paste0("step_", index)
+                    text = paste0("Step ", i, ": ", global_rv$workflow_config[[i]]),
+                    tabName = paste0("step_", i),
+                    icon = step_icon
                 )
             })
+        } else {
+            step_items <- NULL
+        }
+
+        menuItem(
+            paste0("Pre-processing (", n_steps, " steps)        "),
+            icon = icon("list-check"),
+            startExpanded = TRUE,
+            step_items
         )
     })
 }
