@@ -27,7 +27,7 @@ box_read_table_ui <- function(id) {
             fluidRow(
                 hidden(
                     div(
-                        id = NS(id,"myboxwrapper"),
+                        id = NS(id, "previewWrapper"),
                         box(
                             title = "Preview",
                             status = "primary",

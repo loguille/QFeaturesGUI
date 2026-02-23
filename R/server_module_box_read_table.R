@@ -45,7 +45,7 @@ box_read_table_server <- function(id, given_table = NULL) {
                     header = TRUE,
                     row.names = 1
                 )
-                shinyjs::show("myboxwrapper")
+                shinyjs::show("previewWrapper")
                 shinycssloaders::hidePageSpinner()
                 table(new_table)
                 global_rv$code_lines[paste0("read_", id, "_data")] <- code_generator_read_table(
