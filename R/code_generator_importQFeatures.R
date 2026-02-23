@@ -47,8 +47,7 @@ code_generator_read_qfeatures <- function(input_table, sample_table, qfeatures, 
 }
 
 code_generator_read_table <- function(id, file, sep, dec, skip, stringAsFactors, comment) {
-    codeLines <- c()
-    codeLines <- c(codeLines, sprintf(
+    codeLines <- sprintf(
         "\n%s_table <- read.table(%s,\n\tsep = '%s',\n\tdec = '%s',\n\tskip = '%s',\n\tstringsAsFactors = %s,\n\tcomment.char = '%s',\n\theader = TRUE,\n\trow.names = 1\n)",
         id,
         file,
@@ -57,6 +56,6 @@ code_generator_read_table <- function(id, file, sep, dec, skip, stringAsFactors,
         skip,
         stringAsFactors,
         comment
-    ))
+    )
     codeLines
 }
