@@ -208,13 +208,14 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
                     ),
                     r_file
                 )
-                if(!is.null(sample_table())){
+                if (!is.null(sample_table())) {
                     print(sample_table)
                     write(
-                        c("# insert the path to your sample data table here",
-                          "# sample_data <- read.csv('sample_data_table',sep = ',')",
-                          "# sample_data <- read.table('sample_data_table', sep = '\t')",
-                          global_rv$code_lines$read_sample_data
+                        c(
+                            "# insert the path to your sample data table here",
+                            "# sample_data <- read.csv('sample_data_table',sep = ',')",
+                            "# sample_data <- read.table('sample_data_table', sep = '\t')",
+                            global_rv$code_lines$read_sample_data
                         ),
                         file = r_file,
                         append = TRUE
