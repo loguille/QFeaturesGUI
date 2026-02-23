@@ -14,7 +14,7 @@
 #' @keywords internal
 
 
-code_generator_importQFeatures <- function(input_table, sample_table, qfeatures, run_col, removeEmptyCols, quant_cols, logTransform, zero_as_NA) {
+code_generator_read_qfeatures <- function(input_table, sample_table, qfeatures, run_col, removeEmptyCols, quant_cols, logTransform, zero_as_NA) {
     if (is.data.frame(sample_table())) {
         colData <- "sample_table"
         quantCols <- "NULL"
