@@ -32,7 +32,7 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
         qfeatures <- eventReactive(input$convert, {
             shinycssloaders::showPageSpinner(
                 type = "6",
-                caption = "Be aware that this operation can be quite time consuming for large datasets"
+                caption = "Be aware that the conversion into QFeatures object can be quite time consuming for large datasets"
             )
             shinyjs::show("downloadQFeatures")
             if (is.data.frame(sample_table())) {
