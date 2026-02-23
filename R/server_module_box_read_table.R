@@ -30,7 +30,7 @@ box_read_table_server <- function(id, given_table = NULL) {
             {
                 shinycssloaders::showPageSpinner(
                     type = "6",
-                    caption = "Be aware that this operation can be quite time consuming for large datasets"
+                    caption = "Be aware that import table can be quite time consuming for large datasets"
                 )
                 req(input$file)
                 new_table <- error_handler(
@@ -45,6 +45,7 @@ box_read_table_server <- function(id, given_table = NULL) {
                     header = TRUE,
                     row.names = 1
                 )
+                shinyjs::show("myboxwrapper")
                 shinycssloaders::hidePageSpinner()
                 table(new_table)
                 global_rv$code_lines[paste0("read_", id, "_data")] <- code_generator_read_table(
