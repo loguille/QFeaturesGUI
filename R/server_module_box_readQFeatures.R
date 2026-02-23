@@ -18,7 +18,7 @@
 #' @importFrom shinyjs enable show
 #' @importFrom SingleCellExperiment SingleCellExperiment
 #' @importFrom SummarizedExperiment SummarizedExperiment
-#' @importFrom MultiAssayExperiment MultiAssayExperiment
+#' @importFrom MultiAssayExperiment MultiAssayExperiment ExperimentList
 #'
 box_readqfeatures_server <- function(id, input_table, sample_table) {
     stopifnot(is.reactive(input_table))
@@ -150,7 +150,7 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
             }
         })
         observeEvent(input$convert, {
-            global_rv$code_lines$create_qfeatures <- code_generator_importQFeatures(
+            global_rv$code_lines$create_qfeatures <- code_generator_read_qfeatures(
                 input_table,
                 sample_table,
                 qfeatures,
