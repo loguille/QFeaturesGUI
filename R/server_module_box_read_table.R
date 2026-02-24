@@ -16,7 +16,10 @@ box_read_table_server <- function(id, given_table = NULL) {
         table <- reactiveVal()
         observe(
             if (!is.null(given_table)) {
+                shinyjs::show("previewWrapper")
                 table(given_table)
+                global_rv$code_lines[paste0("read_", id, "_data")] <- paste0("# ", id, "_table passed in parameters\n", "# ", id, "_table <- data_frame\n")
+                global_rv$code_lines[paste0(id, "_data_passed_in_parameters")] <- TRUE
             }
         )
         observeEvent(
