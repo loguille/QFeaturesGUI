@@ -79,7 +79,7 @@ box_readqfeatures_ui <- function(id) {
                         solidHeader = FALSE,
                         collapsible = TRUE,
                         id = NS(id, "qfeatures_preview"),
-                        infoBoxOutput(NS(id,"type_of_qfeatures")),
+                        infoBoxOutput(NS(id, "type_of_qfeatures")),
                         DT::dataTableOutput(NS(id, "qfeatures_dt"))
                     )
                 )

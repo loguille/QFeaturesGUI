@@ -121,9 +121,9 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
                 page_assays_subset(qfeatures(), "_(QFeaturesGUI#0)")
             )
         })
-        
+
         output$type_of_qfeatures <- renderInfoBox({
-          infoBox("Type of QFeatures :", getQFeaturesType(qfeatures()), fill = TRUE, color = "light-blue")  
+            infoBox("Type of QFeatures :", getQFeaturesType(qfeatures()), fill = TRUE, color = "light-blue")
         })
         output$qfeatures_dt <- DT::renderDataTable({
             DT::datatable(qfeatures_df(),
@@ -211,20 +211,20 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
                     r_file
                 )
                 write(
-                  c(
-                    global_rv$code_lines$read_input_data
-                  ),
-                  file = r_file,
-                  append = TRUE
-                )
-                if(!is.null(sample_table())){
-                  write(
                     c(
-                      global_rv$code_lines$read_sample_data
+                        global_rv$code_lines$read_input_data
                     ),
                     file = r_file,
                     append = TRUE
-                  )
+                )
+                if (!is.null(sample_table())) {
+                    write(
+                        c(
+                            global_rv$code_lines$read_sample_data
+                        ),
+                        file = r_file,
+                        append = TRUE
+                    )
                 }
                 write(
                     c(
