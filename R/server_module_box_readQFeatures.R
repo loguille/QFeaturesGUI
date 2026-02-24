@@ -10,7 +10,7 @@
 #'
 #' @importFrom shiny is.reactive reactive moduleServer observe eventReactive updateSelectInput removeModal downloadHandler
 #' @importFrom DT renderDataTable datatable
-#' @importFrom QFeatures readQFeatures
+#' @importFrom QFeatures readQFeatures setQFeaturesType getQFeaturesType
 #' @importFrom QFeatures zeroIsNA
 #' @importFrom methods as
 #' @importFrom utils zip
@@ -19,6 +19,7 @@
 #' @importFrom SingleCellExperiment SingleCellExperiment
 #' @importFrom SummarizedExperiment SummarizedExperiment
 #' @importFrom MultiAssayExperiment MultiAssayExperiment ExperimentList
+#' @importFrom shinydashboard infoBox renderInfoBox
 #'
 box_readqfeatures_server <- function(id, input_table, sample_table) {
     stopifnot(is.reactive(input_table))
@@ -80,11 +81,9 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
                 )
             }
             if (input$singlecell) {
-                el <- ExperimentList(lapply(
-                    experiments(qfeatures),
-                    as, "SingleCellExperiment"
-                ))
-                experiments(qfeatures) <- el
+                setQFeaturesType(qfeatures, type = "scp")
+            } else {
+                setQFeaturesType(qfeatures, type = "bulk")
             }
             # The following code is a workaround
             # to fix keep track of the steps in the QFeatures object
@@ -122,7 +121,10 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
                 page_assays_subset(qfeatures(), "_(QFeaturesGUI#0)")
             )
         })
-
+        
+        output$type_of_qfeatures <- renderInfoBox({
+          infoBox("Type of QFeatures :", getQFeaturesType(qfeatures()), fill = TRUE, color = "light-blue")  
+        })
         output$qfeatures_dt <- DT::renderDataTable({
             DT::datatable(qfeatures_df(),
                 extensions = "FixedColumns",
@@ -208,45 +210,21 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
                     ),
                     r_file
                 )
-                if (global_rv$code_lines$input_data_passed_in_parameters == FALSE) {
-                    write(
-                        c(
-                            "# insert the path to your input data table here",
-                            "# input_data <- read.table('input_data_table', sep = '\t')",
-                            global_rv$code_lines$read_input_data
-                        ),
-                        r_file,
-                        append = TRUE
-                    )
-                } else {
-                    write(
-                        c(
-                            global_rv$code_lines$read_input_data
-                        ),
-                        r_file,
-                        append = TRUE
-                    )
-                }
-                if (!is.null(sample_table())) {
-                    if (global_rv$code_lines$sample_data_passed_in_parameters == FALSE) {
-                        write(
-                            c(
-                                "# insert the path to your sample data table here",
-                                "# sample_data <- read.table('sample_data_table', sep = '\t')",
-                                global_rv$code_lines$read_sample_data
-                            ),
-                            file = r_file,
-                            append = TRUE
-                        )
-                    } else {
-                        write(
-                            c(
-                                global_rv$code_lines$read_sample_data
-                            ),
-                            file = r_file,
-                            append = TRUE
-                        )
-                    }
+                write(
+                  c(
+                    global_rv$code_lines$read_input_data
+                  ),
+                  file = r_file,
+                  append = TRUE
+                )
+                if(!is.null(sample_table())){
+                  write(
+                    c(
+                      global_rv$code_lines$read_sample_data
+                    ),
+                    file = r_file,
+                    append = TRUE
+                  )
                 }
                 write(
                     c(

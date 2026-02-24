@@ -9,6 +9,7 @@
 #'
 #' @importFrom shiny tagList selectInput checkboxInput actionButton downloadButton NS
 #' @importFrom shinydashboardPlus box
+#' @importFrom shinydashboard infoBoxOutput
 #' @importFrom DT dataTableOutput
 #' @importFrom shinyjs disabled hidden
 #'
@@ -78,6 +79,7 @@ box_readqfeatures_ui <- function(id) {
                         solidHeader = FALSE,
                         collapsible = TRUE,
                         id = NS(id, "qfeatures_preview"),
+                        infoBoxOutput(NS(id,"type_of_qfeatures")),
                         DT::dataTableOutput(NS(id, "qfeatures_dt"))
                     )
                 )
