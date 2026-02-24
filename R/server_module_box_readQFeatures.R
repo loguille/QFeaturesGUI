@@ -29,12 +29,15 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
                 shinyjs::enable("convert")
             }
         })
+        observeEvent(input$convert, {
+            shinyjs::show("qfeatures_preview_box")
+            shinyjs::show("downloadQFeatures")
+        })
         qfeatures <- eventReactive(input$convert, {
             shinycssloaders::showPageSpinner(
                 type = "6",
                 caption = "Be aware that the conversion into QFeatures object can be quite time consuming for large datasets"
             )
-            shinyjs::show("downloadQFeatures")
             if (is.data.frame(sample_table())) {
                 colData <- sample_table()
                 quantCols <- NULL
@@ -94,6 +97,7 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
                     "_(QFeaturesGUI#0)_initial_import"
                 )
             }
+            shinyjs::show("selected_assay_preview_box")
             shinycssloaders::hidePageSpinner()
             qfeatures
         })
@@ -228,7 +232,6 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
                         write(
                             c(
                                 "# insert the path to your sample data table here",
-                                "# sample_data <- read.csv('sample_data_table',sep = ',')",
                                 "# sample_data <- read.table('sample_data_table', sep = '\t')",
                                 global_rv$code_lines$read_sample_data
                             ),
