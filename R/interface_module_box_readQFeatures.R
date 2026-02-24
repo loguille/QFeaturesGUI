@@ -68,23 +68,33 @@ box_readqfeatures_ui <- function(id) {
                     )
                 )
             ),
-            box(
-                title = "QFeatures Preview",
-                status = "primary",
-                width = 12,
-                solidHeader = FALSE,
-                collapsible = TRUE,
-                id = NS(id, "qfeatures_preview"),
-                DT::dataTableOutput(NS(id, "qfeatures_dt"))
+            hidden(
+                div(
+                    id = NS(id, "qfeatures_preview_box"),
+                    box(
+                        title = "QFeatures Preview",
+                        status = "primary",
+                        width = 12,
+                        solidHeader = FALSE,
+                        collapsible = TRUE,
+                        id = NS(id, "qfeatures_preview"),
+                        DT::dataTableOutput(NS(id, "qfeatures_dt"))
+                    )
+                )
             ),
-            box(
-                title = "Selected Assay Preview",
-                status = "primary",
-                width = 12,
-                solidHeader = FALSE,
-                collapsible = TRUE,
-                id = NS(id, "assay_preview"),
-                DT::dataTableOutput(NS(id, "assay_table"))
+            hidden(
+                div(
+                    id = NS(id, "selected_assay_preview_box"),
+                    box(
+                        title = "Selected Assay Preview",
+                        status = "primary",
+                        width = 12,
+                        solidHeader = FALSE,
+                        collapsible = TRUE,
+                        id = NS(id, "assay_preview"),
+                        DT::dataTableOutput(NS(id, "assay_table"))
+                    )
+                )
             ),
             hidden(
                 downloadButton(

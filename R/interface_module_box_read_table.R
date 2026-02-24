@@ -25,18 +25,13 @@ box_read_table_ui <- function(id) {
                 accept = c(".csv", ".tsv")
             ),
             fluidRow(
-                hidden(
-                    div(
-                        id = NS(id, "previewWrapper"),
-                        box(
-                            title = "Preview",
-                            status = "primary",
-                            width = 8,
-                            solidHeader = FALSE,
-                            collapsible = TRUE,
-                            DT::dataTableOutput(NS(id, "dt_table"))
-                        )
-                    )
+                box(
+                    title = "Preview",
+                    status = "primary",
+                    width = 8,
+                    solidHeader = FALSE,
+                    collapsible = TRUE,
+                    DT::dataTableOutput(NS(id, "dt_table"))
                 ),
                 box(
                     title = "Parameters",
