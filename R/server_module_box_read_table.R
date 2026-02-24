@@ -19,8 +19,8 @@ box_read_table_server <- function(id, given_table = NULL) {
                 table(given_table)
                 global_rv$code_lines[paste0(id, "_data_passed_in_parameters")] <- TRUE
                 global_rv$code_lines[paste0("read_", id, "_data")] <- code_generator_read_table(
-                  id = id,
-                  arg_as_param = global_rv$code_lines[paste0(id,"_data_passed_in_parameters")]
+                    id = id,
+                    arg_as_param = global_rv$code_lines[paste0(id, "_data_passed_in_parameters")]
                 )
             }
         )
@@ -60,7 +60,7 @@ box_read_table_server <- function(id, given_table = NULL) {
                     dec = input$dec,
                     skip = input$skip,
                     stringAsFactors = input$stringsAsFactors,
-                    comment = input$comment_char   
+                    comment = input$comment_char
                 )
             }
         )
