@@ -25,7 +25,9 @@ build_import_server <- function(sample_table, input_table) {
         global_rv$code_lines <- list(
             read_input_data = character(),
             read_sample_data = character(),
-            create_qfeatures = character()
+            create_qfeatures = character(),
+            input_data_passed_in_parameters = FALSE,
+            sample_data_passed_in_parameters = FALSE
         )
         server_exception_menu(input, output, session)
         server_import_tab(

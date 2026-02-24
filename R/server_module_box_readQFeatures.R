@@ -200,26 +200,50 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
                     c(
                         "# Reproducible R script",
                         paste0("# Generated on: ", Sys.time()),
-                        "",
-                        "# insert the path to your input data table here",
-                        "# input_data <- read.csv('input_data_table', sep = ',')",
-                        "# input_data <- read.table('input_data_table', sep = '\t')",
-                        global_rv$code_lines$read_input_data
+                        ""
                     ),
                     r_file
                 )
-                if (!is.null(sample_table())) {
-                    print(sample_table)
+                if (global_rv$code_lines$input_data_passed_in_parameters == FALSE) {
                     write(
                         c(
-                            "# insert the path to your sample data table here",
-                            "# sample_data <- read.csv('sample_data_table',sep = ',')",
-                            "# sample_data <- read.table('sample_data_table', sep = '\t')",
-                            global_rv$code_lines$read_sample_data
+                            "# insert the path to your input data table here",
+                            "# input_data <- read.table('input_data_table', sep = '\t')",
+                            global_rv$code_lines$read_input_data
                         ),
-                        file = r_file,
+                        r_file,
                         append = TRUE
                     )
+                } else {
+                    write(
+                        c(
+                            global_rv$code_lines$read_input_data
+                        ),
+                        r_file,
+                        append = TRUE
+                    )
+                }
+                if (!is.null(sample_table())) {
+                    if (global_rv$code_lines$sample_data_passed_in_parameters == FALSE) {
+                        write(
+                            c(
+                                "# insert the path to your sample data table here",
+                                "# sample_data <- read.csv('sample_data_table',sep = ',')",
+                                "# sample_data <- read.table('sample_data_table', sep = '\t')",
+                                global_rv$code_lines$read_sample_data
+                            ),
+                            file = r_file,
+                            append = TRUE
+                        )
+                    } else {
+                        write(
+                            c(
+                                global_rv$code_lines$read_sample_data
+                            ),
+                            file = r_file,
+                            append = TRUE
+                        )
+                    }
                 }
                 write(
                     c(
