@@ -17,8 +17,11 @@ box_read_table_server <- function(id, given_table = NULL) {
         observe(
             if (!is.null(given_table)) {
                 table(given_table)
-                global_rv$code_lines[paste0("read_", id, "_data")] <- paste0("# ", id, "_table passed in parameters\n", "# ", id, "_table <- data_frame\n")
                 global_rv$code_lines[paste0(id, "_data_passed_in_parameters")] <- TRUE
+                global_rv$code_lines[paste0("read_", id, "_data")] <- code_generator_read_table(
+                  id = id,
+                  arg_as_param = global_rv$code_lines[paste0(id,"_data_passed_in_parameters")]
+                )
             }
         )
         observeEvent(
@@ -51,12 +54,13 @@ box_read_table_server <- function(id, given_table = NULL) {
                 table(new_table)
                 global_rv$code_lines[paste0("read_", id, "_data")] <- code_generator_read_table(
                     id = id,
+                    arg_as_param = global_rv$code_lines[paste0(id, "_data_passed_in_parameters")],
                     file = paste0(id, "_table"),
                     sep = input$sep,
                     dec = input$dec,
                     skip = input$skip,
                     stringAsFactors = input$stringsAsFactors,
-                    comment = input$comment_char
+                    comment = input$comment_char   
                 )
             }
         )
