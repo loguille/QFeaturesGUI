@@ -123,6 +123,7 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
         })
 
         output$type_of_qfeatures <- renderInfoBox({
+            req(qfeatures())
             infoBox("Type of QFeatures :", getQFeaturesType(qfeatures()), fill = TRUE, color = "light-blue")
         })
         output$qfeatures_dt <- DT::renderDataTable({
@@ -164,7 +165,8 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
                 input$removeEmptyCols,
                 input$quant_cols,
                 input$logTransform,
-                input$zero_as_NA
+                input$zero_as_NA,
+                input$singlecell
             )
         })
         output$downloadQFeatures <- downloadHandler(

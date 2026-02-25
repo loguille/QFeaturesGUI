@@ -14,7 +14,7 @@
 #' @keywords internal
 
 
-code_generator_read_qfeatures <- function(input_table, sample_table, qfeatures, run_col, removeEmptyCols, quant_cols, logTransform, zero_as_NA) {
+code_generator_read_qfeatures <- function(input_table, sample_table, qfeatures, run_col, removeEmptyCols, quant_cols, logTransform, zero_as_NA, singlcelldata) {
     if (is.data.frame(sample_table())) {
         colData <- "sample_table"
         quantCols <- "NULL"
@@ -42,6 +42,9 @@ code_generator_read_qfeatures <- function(input_table, sample_table, qfeatures, 
     }
     if (logTransform) {
         codeLines <- c(codeLines, "\nqfeatures <- QFeatures::logTransform(\n\tobject = qfeatures,\n\ti = seq_along(qfeatures),\n\tbase = 2,\n\tname = paste0(names(qfeatures), '_logTransformed')\n)")
+    }
+    if (singlcelldata) {
+        codeLines <- c(codeLines, "\nqfeatures <- setQFeaturesType(\n\tqfeatures,\n\ttype = 'scp'\n)")
     }
     codeLines
 }
