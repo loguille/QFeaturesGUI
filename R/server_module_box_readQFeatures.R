@@ -81,9 +81,9 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
                 )
             }
             if (input$singlecell) {
-                setQFeaturesType(qfeatures, type = "scp")
+                qfeatures <- setQFeaturesType(qfeatures, type = "scp")
             } else {
-                setQFeaturesType(qfeatures, type = "bulk")
+                qfeatures <- setQFeaturesType(qfeatures, type = "bulk")
             }
             # The following code is a workaround
             # to fix keep track of the steps in the QFeatures object
