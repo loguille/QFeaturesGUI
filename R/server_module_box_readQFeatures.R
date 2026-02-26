@@ -20,6 +20,7 @@
 #' @importFrom SummarizedExperiment SummarizedExperiment
 #' @importFrom MultiAssayExperiment MultiAssayExperiment ExperimentList
 #' @importFrom shinydashboard infoBox renderInfoBox
+#' @importFrom rmarkdown render
 #'
 box_readqfeatures_server <- function(id, input_table, sample_table) {
     stopifnot(is.reactive(input_table))
@@ -158,7 +159,7 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
             global_rv$code_lines$create_qfeatures <- code_generator_read_qfeatures(
                 input_table,
                 sample_table,
-                qfeatures,
+                qfeatures(),
                 input$run_col,
                 input$removeEmptyCols,
                 input$quant_cols,
