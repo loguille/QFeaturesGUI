@@ -17,10 +17,10 @@ box_read_table_server <- function(id, given_table = NULL) {
         observe(
             if (!is.null(given_table)) {
                 table(given_table)
-                global_rv$code_lines[paste0(id, "_data_passed_in_parameters")] <- TRUE
-                global_rv$code_lines[paste0("read_", id, "_data")] <- code_generator_read_table(
+                global_rv$code_lines[[paste0(id, "_data_passed_in_parameters")]] <- TRUE
+                global_rv$code_lines[[paste0("read_", id, "_data")]] <- code_generator_read_table(
                     id = id,
-                    arg_as_param = global_rv$code_lines[paste0(id, "_data_passed_in_parameters")]
+                    arg_as_param = global_rv$code_lines[[paste0(id, "_data_passed_in_parameters")]]
                 )
             }
         )
@@ -52,9 +52,9 @@ box_read_table_server <- function(id, given_table = NULL) {
                 )
                 shinycssloaders::hidePageSpinner()
                 table(new_table)
-                global_rv$code_lines[paste0("read_", id, "_data")] <- code_generator_read_table(
+                global_rv$code_lines[[paste0("read_", id, "_data")]] <- code_generator_read_table(
                     id = id,
-                    arg_as_param = global_rv$code_lines[paste0(id, "_data_passed_in_parameters")],
+                    arg_as_param = global_rv$code_lines[[paste0(id, "_data_passed_in_parameters")]],
                     file = paste0(id, "_table"),
                     sep = input$sep,
                     dec = input$dec,
