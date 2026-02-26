@@ -34,12 +34,12 @@ Imports:
     ggplot2,
     tidyr,
     shinyjs,
+    rmarkdown
 Depends:
     shinyBS,
     R (>= 4.3.0)
 Suggests: 
     knitr,
-    rmarkdown,
     BiocStyle
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
