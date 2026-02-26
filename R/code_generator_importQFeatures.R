@@ -17,7 +17,7 @@
 code_generator_read_qfeatures <- function(input_table, sample_table, qfeatures, run_col, removeEmptyCols, quant_cols, logTransform, zero_as_NA, singlcelldata) {
     if (is.data.frame(sample_table())) {
         colData <- "sample_table"
-        quantCols <- "NULL"
+        quantCols <- NULL
     } else {
         colData <- "NULL"
         quantCols <- quant_cols
@@ -28,23 +28,34 @@ code_generator_read_qfeatures <- function(input_table, sample_table, qfeatures, 
     } else {
         runCol <- "NULL"
     }
-
-    quantColumns <- paste(sprintf('"%s"', quantCols), collapse = ",\n\t\t")
-    codeLines <- sprintf(
-        "\nqfeatures <- QFeatures::readQFeatures(\n\tassayData = input_table,\n\tcolData = %s,\n\trunCol = %s,\n\tquantCols = c(%s),\n\tremoveEmptyCols = %s,\n\tverbose = FALSE\n)",
+    
+    if(!is.null(quantCols)){
+      quantColumns <- paste(sprintf('"%s"', quantCols), collapse = ",\n\t\t")
+      codeLines <- sprintf(
+        "\nqfeatures <- readQFeatures(\n\tassayData = input_table,\n\tcolData = %s,\n\trunCol = %s,\n\tquantCols = c(%s),\n\tremoveEmptyCols = %s,\n\tverbose = FALSE\n)",
         colData,
         runCol,
         quantColumns,
         removeEmptyCols
-    )
+      )
+    } else {
+      
+      codeLines <- sprintf(
+        "\nqfeatures <- readQFeatures(\n\tassayData = input_table,\n\tcolData = %s,\n\trunCol = %s,\n\tquantCols = NULL,\n\tremoveEmptyCols = %s,\n\tverbose = FALSE\n)",
+        colData,
+        runCol,
+        removeEmptyCols
+      )
+    }
+    
     if (zero_as_NA && length(qfeatures) > 0) {
-        codeLines <- c(codeLines, "\nqfeatures <- QFeatures::zeroIsNA(\n\tobject = qfeatures,\n\ti = seq_along(qfeatures)\n)")
+        codeLines <- c(codeLines, "\nqfeatures <- zeroIsNA(\n\tobject = qfeatures,\n\ti = seq_along(qfeatures)\n)")
     }
     if (logTransform) {
-        codeLines <- c(codeLines, "\nqfeatures <- QFeatures::logTransform(\n\tobject = qfeatures,\n\ti = seq_along(qfeatures),\n\tbase = 2,\n\tname = paste0(names(qfeatures), '_logTransformed')\n)")
+        codeLines <- c(codeLines, "\nqfeatures <- logTransform(\n\tobject = qfeatures,\n\ti = seq_along(qfeatures),\n\tbase = 2,\n\tname = paste0(names(qfeatures), '_logTransformed')\n)")
     }
     if (singlcelldata) {
-        codeLines <- c(codeLines, "\nqfeatures <- QFeatures::setQFeaturesType(\n\tqfeatures,\n\ttype = 'scp'\n)")
+        codeLines <- c(codeLines, "\nqfeatures <- setQFeaturesType(\n\tqfeatures,\n\ttype = 'scp'\n)")
     }
     codeLines
 }
@@ -66,11 +77,11 @@ code_generator_read_table <- function(id, arg_as_param, file = NULL, sep = NULL,
     } else {
         if (id == "input") {
             codeLines <- sprintf(
-                "# Replace dataFrame1 with the value passed as assayData arg\n\nassayData <- dataFrame1\n"
+                "# Replace dataFrame1 with the value passed as assayData arg\n\ninput_table <- dataFrame1\n"
             )
         } else {
             codeLines <- sprintf(
-                "# Replace dataFrame2 with the value passed as colData arg\n\ncolData <- dataFrame2\n"
+                "# Replace dataFrame2 with the value passed as colData arg\n\nsample_table <- dataFrame2\n"
             )
         }
     }

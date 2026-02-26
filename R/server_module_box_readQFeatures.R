@@ -207,7 +207,8 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
                     c(
                         "# Reproducible R script",
                         paste0("# Generated on: ", Sys.time()),
-                        ""
+                        "",
+                        "library(QFeatures)\n"
                     ),
                     r_file
                 )
