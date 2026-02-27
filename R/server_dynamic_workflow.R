@@ -21,7 +21,9 @@ server_dynamic_workflow <- function(input, output, session) {
                     "Sample Filtering" = interface_module_samples_filtering_tab(paste0("sample_filtering_", i)),
                     "Feature Filtering" = interface_module_features_filtering_tab(paste0("feature_filtering_", i)),
                     "Log Transformation" = interface_module_log_transform_tab(paste0("log_transform_", i)),
-                    "Normalisation" = interface_module_normalisation_tab(paste0("normalisation_", i))
+                    "Normalisation" = interface_module_normalisation_tab(paste0("normalisation_", i)),
+                    "Filtering NAs by Features" = interface_module_missing_values_tab(paste0("missing_values_",i),"features"),
+                    "Filtering NAs by Samples" = interface_module_missing_values_tab(paste0("missing_values_",i),"samples")
                 )
             })
 
