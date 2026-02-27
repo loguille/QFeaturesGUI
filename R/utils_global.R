@@ -414,7 +414,9 @@ check_prefilled_steps <- function(prefilledSteps) {
     valid_steps <- c(
         sample_filtering   = "Sample Filtering",
         normalisation      = "Normalisation",
-        feature_filtering  = "Feature Filtering"
+        feature_filtering  = "Feature Filtering",
+        missing_values_features = "Filtering NAs by Features",
+        missing_values_samples = "Filtering NAs by Samples"
     )
 
     unknown_steps <- setdiff(prefilledSteps, names(valid_steps))
