@@ -9,20 +9,35 @@
 #'
 #' @importFrom shiny moduleServer observe observeEvent reactiveVal req
 #' @importFrom utils data read.table
+#' @importFrom shinyjs enable
+#' @importFrom shinycssloaders showPageSpinner hidePageSpinner
 box_read_table_server <- function(id, given_table = NULL) {
     moduleServer(id, function(input, output, session) {
         table <- reactiveVal()
         observe(
             if (!is.null(given_table)) {
                 table(given_table)
+                global_rv$code_lines[[paste0(id, "_data_passed_in_parameters")]] <- TRUE
+                global_rv$code_lines[[paste0("read_", id, "_data")]] <- code_generator_read_table(
+                    id = id,
+                    arg_as_param = global_rv$code_lines[[paste0(id, "_data_passed_in_parameters")]]
+                )
             }
         )
-
+        observeEvent(
+            input$file,
+            {
+                shinyjs::enable("import_button")
+            }
+        )
         observeEvent(
             input$import_button,
             {
+                shinycssloaders::showPageSpinner(
+                    type = "6",
+                    caption = "Be aware that import table can be quite time consuming for large datasets"
+                )
                 req(input$file)
-                loading("Be aware that this operation can be quite time consuming for large data sets")
                 new_table <- error_handler(
                     read.table,
                     component_name = paste0("read.table ", id),
@@ -35,8 +50,18 @@ box_read_table_server <- function(id, given_table = NULL) {
                     header = TRUE,
                     row.names = 1
                 )
-                removeModal()
+                shinycssloaders::hidePageSpinner()
                 table(new_table)
+                global_rv$code_lines[[paste0("read_", id, "_data")]] <- code_generator_read_table(
+                    id = id,
+                    arg_as_param = global_rv$code_lines[[paste0(id, "_data_passed_in_parameters")]],
+                    file = paste0(id, "_table"),
+                    sep = input$sep,
+                    dec = input$dec,
+                    skip = input$skip,
+                    stringAsFactors = input$stringsAsFactors,
+                    comment = input$comment_char
+                )
             }
         )
 
@@ -54,7 +79,6 @@ box_read_table_server <- function(id, given_table = NULL) {
                 )
             )
         })
-
         table
     })
 }
