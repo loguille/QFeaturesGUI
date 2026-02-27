@@ -9,7 +9,9 @@
 #'
 #' @importFrom shiny tagList selectInput checkboxInput actionButton downloadButton NS
 #' @importFrom shinydashboardPlus box
+#' @importFrom shinydashboard infoBoxOutput
 #' @importFrom DT dataTableOutput
+#' @importFrom shinyjs disabled hidden
 #'
 box_readqfeatures_ui <- function(id) {
     tagList(
@@ -58,36 +60,51 @@ box_readqfeatures_ui <- function(id) {
                     label = "Single cell data",
                     value = FALSE
                 ),
-                actionButton(
-                    inputId = NS(id, "convert"),
-                    "Convert to a QFeatures object",
-                    class = "add-button no-bottom-margin",
-                    width = "100%",
+                disabled(
+                    actionButton(
+                        inputId = NS(id, "convert"),
+                        "Convert to a QFeatures object",
+                        class = "add-button no-bottom-margin",
+                        width = "100%"
+                    )
                 )
             ),
-            box(
-                title = "QFeatures Preview",
-                status = "primary",
-                width = 12,
-                solidHeader = FALSE,
-                collapsible = TRUE,
-                id = NS(id, "qfeatures_preview"),
-                DT::dataTableOutput(NS(id, "qfeatures_dt"))
+            hidden(
+                div(
+                    id = NS(id, "qfeatures_preview_box"),
+                    box(
+                        title = "QFeatures Preview",
+                        status = "primary",
+                        width = 12,
+                        solidHeader = FALSE,
+                        collapsible = TRUE,
+                        id = NS(id, "qfeatures_preview"),
+                        infoBoxOutput(NS(id, "type_of_qfeatures")),
+                        DT::dataTableOutput(NS(id, "qfeatures_dt"))
+                    )
+                )
             ),
-            box(
-                title = "Selected Assay Preview",
-                status = "primary",
-                width = 12,
-                solidHeader = FALSE,
-                collapsible = TRUE,
-                id = NS(id, "assay_preview"),
-                DT::dataTableOutput(NS(id, "assay_table"))
+            hidden(
+                div(
+                    id = NS(id, "selected_assay_preview_box"),
+                    box(
+                        title = "Selected Assay Preview",
+                        status = "primary",
+                        width = 12,
+                        solidHeader = FALSE,
+                        collapsible = TRUE,
+                        id = NS(id, "assay_preview"),
+                        DT::dataTableOutput(NS(id, "assay_table"))
+                    )
+                )
             ),
-            downloadButton(
-                outputId = NS(id, "downloadQFeatures"),
-                "Download QFeatures object",
-                class = "load-button",
-                style = "width: 100%;"
+            hidden(
+                downloadButton(
+                    outputId = NS(id, "downloadQFeatures"),
+                    "Download QFeatures object",
+                    class = "load-button",
+                    style = "width: 100%;"
+                )
             )
         )
     )

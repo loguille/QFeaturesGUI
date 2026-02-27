@@ -10,68 +10,59 @@
 #'
 #' @importFrom shiny is.reactive reactive moduleServer observe eventReactive updateSelectInput removeModal downloadHandler
 #' @importFrom DT renderDataTable datatable
-#' @importFrom QFeatures readQFeatures
+#' @importFrom QFeatures readQFeatures setQFeaturesType getQFeaturesType
 #' @importFrom QFeatures zeroIsNA
 #' @importFrom methods as
-#' @import SingleCellExperiment
-#' @import SummarizedExperiment
-#' @import MultiAssayExperiment
+#' @importFrom utils zip
+#' @importFrom shinycssloaders  showPageSpinner hidePageSpinner
+#' @importFrom shinyjs enable show
+#' @importFrom SingleCellExperiment SingleCellExperiment
+#' @importFrom SummarizedExperiment SummarizedExperiment
+#' @importFrom MultiAssayExperiment MultiAssayExperiment ExperimentList
+#' @importFrom shinydashboard infoBox renderInfoBox
+#' @importFrom rmarkdown render
 #'
 box_readqfeatures_server <- function(id, input_table, sample_table) {
     stopifnot(is.reactive(input_table))
     stopifnot(is.reactive(sample_table))
-
     moduleServer(id, function(input, output, session) {
-        qfeatures <- eventReactive(input$convert, {
-            loading(paste("Be aware that this operation",
-                "can be quite time consuming for large data sets",
-                sep = " "
-            ))
-            if (is.data.frame(sample_table())) {
-                if (input$run_col != "NULL") {
-                    qfeatures <- error_handler(
-                        QFeatures::readQFeatures,
-                        component_name = "QFeatures converting (readQFeatures)",
-                        assayData = input_table(),
-                        colData = sample_table(),
-                        runCol = input$run_col,
-                        removeEmptyCols = input$removeEmptyCols,
-                        verbose = FALSE
-                    )
-                } else {
-                    qfeatures <- error_handler(
-                        QFeatures::readQFeatures,
-                        component_name = "QFeatures converting (readQFeatures)",
-                        assayData = input_table(),
-                        colData = sample_table(),
-                        runCol = NULL,
-                        removeEmptyCols = input$removeEmptyCols,
-                        verbose = FALSE
-                    )
-                }
-            } else {
-                if (input$run_col != "NULL") {
-                    qfeatures <- error_handler(
-                        QFeatures::readQFeatures,
-                        component_name = "QFeatures converting (readQFeatures)",
-                        assayData = input_table(),
-                        runCol = input$run_col,
-                        quantCols = input$quant_cols,
-                        removeEmptyCols = input$removeEmptyCols,
-                        verbose = FALSE
-                    )
-                } else {
-                    qfeatures <- error_handler(
-                        QFeatures::readQFeatures,
-                        component_name = "QFeatures converting (readQFeatures)",
-                        assayData = input_table(),
-                        runCol = NULL,
-                        quantCols = input$quant_cols,
-                        removeEmptyCols = input$removeEmptyCols,
-                        verbose = FALSE
-                    )
-                }
+        observe({
+            if (!is.null(input_table())) {
+                shinyjs::enable("convert")
             }
+        })
+        observeEvent(input$convert, {
+            shinyjs::show("qfeatures_preview_box")
+            shinyjs::show("downloadQFeatures")
+        })
+        qfeatures <- eventReactive(input$convert, {
+            shinycssloaders::showPageSpinner(
+                type = "6",
+                caption = "Be aware that the conversion into QFeatures object can be quite time consuming for large datasets"
+            )
+            if (is.data.frame(sample_table())) {
+                colData <- sample_table()
+                quantCols <- NULL
+            } else {
+                colData <- NULL
+                quantCols <- input$quant_cols
+            }
+
+            if (input$run_col != "NULL") {
+                runCol <- input$run_col
+            } else {
+                runCol <- NULL
+            }
+            qfeatures <- error_handler(
+                QFeatures::readQFeatures,
+                component_name = "QFeatures converting (readQFeatures)",
+                assayData = input_table(),
+                colData = colData,
+                runCol = runCol,
+                quantCols = quantCols,
+                removeEmptyCols = input$removeEmptyCols,
+                verbose = FALSE
+            )
             if (input$zero_as_NA && length(qfeatures) > 0) {
                 qfeatures <- error_handler(
                     QFeatures::zeroIsNA,
@@ -91,11 +82,7 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
                 )
             }
             if (input$singlecell) {
-                el <- ExperimentList(lapply(
-                    experiments(qfeatures),
-                    as, "SingleCellExperiment"
-                ))
-                experiments(qfeatures) <- el
+                qfeatures <- setQFeaturesType(qfeatures, type = "scp")
             }
             # The following code is a workaround
             # to fix keep track of the steps in the QFeatures object
@@ -108,7 +95,8 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
                     "_(QFeaturesGUI#0)_initial_import"
                 )
             }
-            removeModal()
+            shinyjs::show("selected_assay_preview_box")
+            shinycssloaders::hidePageSpinner()
             qfeatures
         })
 
@@ -133,6 +121,10 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
             )
         })
 
+        output$type_of_qfeatures <- renderInfoBox({
+            req(qfeatures())
+            infoBox("Type of QFeatures :", getQFeaturesType(qfeatures()), fill = TRUE, color = "light-blue")
+        })
         output$qfeatures_dt <- DT::renderDataTable({
             DT::datatable(qfeatures_df(),
                 extensions = "FixedColumns",
@@ -163,15 +155,93 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
                 )
             }
         })
-
+        observeEvent(input$convert, {
+            global_rv$code_lines$create_qfeatures <- code_generator_read_qfeatures(
+                input_table,
+                sample_table,
+                qfeatures(),
+                input$run_col,
+                input$removeEmptyCols,
+                input$quant_cols,
+                input$logTransform,
+                input$zero_as_NA,
+                input$singlecell
+            )
+        })
         output$downloadQFeatures <- downloadHandler(
             filename = function() {
-                "qfeatures_object.rds"
+                "qfeatures_object.zip"
             },
             content = function(file) {
+                shinycssloaders::showPageSpinner(
+                    type = "6",
+                    caption = "Preparing download, can be quite time consuming"
+                )
+                tmpdir <- tempdir()
                 final_qfeatures <- qfeatures()
                 names(final_qfeatures) <- remove_QFeaturesGUI(names(final_qfeatures))
-                saveRDS(final_qfeatures, file)
+                rds_file <- file.path(tmpdir, "initial_QFeatures.rds")
+                saveRDS(final_qfeatures, rds_file)
+                rmd_file <- file.path(tmpdir, "sessionInfo.Rmd")
+                SI_file <- file.path(tmpdir, "initial_QFeatures_sessionInfo.html")
+                r_file <- file.path(tmpdir, "importQFeatures_script.R")
+                writeLines(
+                    c(
+                        "---",
+                        "title : \"SessionInfo\"",
+                        "output: html_document",
+                        "---",
+                        "",
+                        "```{r}",
+                        "sessionInfo()",
+                        "```"
+                    ),
+                    rmd_file
+                )
+                rmarkdown::render(
+                    rmd_file,
+                    output_file = SI_file,
+                    quiet = TRUE
+                )
+                writeLines(
+                    c(
+                        "# Reproducible R script",
+                        paste0("# Generated on: ", Sys.time()),
+                        "",
+                        "library(QFeatures)\n"
+                    ),
+                    r_file
+                )
+                write(
+                    c(
+                        global_rv$code_lines$read_input_data
+                    ),
+                    file = r_file,
+                    append = TRUE
+                )
+                if (!is.null(sample_table())) {
+                    write(
+                        c(
+                            global_rv$code_lines$read_sample_data
+                        ),
+                        file = r_file,
+                        append = TRUE
+                    )
+                }
+                write(
+                    c(
+                        "# Create QFeatures object",
+                        global_rv$code_lines$create_qfeatures
+                    ),
+                    file = r_file,
+                    append = TRUE
+                )
+                utils::zip(
+                    zipfile = file,
+                    files = c(rds_file, SI_file, r_file),
+                    flags = "-j"
+                )
+                shinycssloaders::hidePageSpinner()
             }
         )
     })
