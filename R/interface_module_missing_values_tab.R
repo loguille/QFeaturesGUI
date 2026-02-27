@@ -23,7 +23,7 @@ interface_module_missing_values_tab <- function(id, type){
         width = 50,
         startOpen = FALSE,
         selectInput(
-          inputId =  paste0("pca_color_", type),
+          inputId =  NS(id, paste0("pca_color_", type)),
           label = "Color by",
           choices = NULL
         ),
@@ -33,21 +33,21 @@ interface_module_missing_values_tab <- function(id, type){
           value = FALSE
         )
       ),
-      plotOutput(paste0("plot_na_", type))
+      plotOutput(NS(id, paste0("plot_na_", type)))
     ),
     box(
       numericInput(
-        inputId = paste0("threshold_", type),
+        inputId = NS(id, paste0("threshold_", type)),
         label = paste("Threshold value for", type),
         value = "0.95",
         min = "0", max = "1", 
         step = "0.05"
         ),
       infoBoxOutput(
-        "nb_removed_features",
+        NS(id, paste0("nb_removed_", type)),
         width = 6),
       infoBoxOutput(
-        "percent_removed_features",
+        NS(id, paste0("percent_removed_",type)),
         width = 6)
     ),
     actionButton(
