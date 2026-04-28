@@ -22,7 +22,7 @@ box_readqfeatures_ui <- function(id) {
             solidHeader = TRUE,
             collapsible = TRUE,
             box(
-                title = "Parameters",
+                title = "Settings",
                 status = "primary",
                 width = 12,
                 solidHeader = FALSE,
