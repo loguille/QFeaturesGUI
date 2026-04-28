@@ -41,7 +41,7 @@ box_read_table_ui <- function(id) {
                     DT::dataTableOutput(NS(id, "dt_table"))
                 ),
                 box(
-                    title = "Parameters",
+                    title = "Settings",
                     status = "primary",
                     width = 4,
                     solidHeader = FALSE,
