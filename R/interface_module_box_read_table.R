@@ -10,10 +10,14 @@
 #' @importFrom shinydashboardPlus box
 #' @importFrom DT dataTableOutput
 #' @importFrom shinyjs disabled
+#' @importFrom shinytip tip tip_icon
 #'
 box_read_table_ui <- function(id) {
     tagList(
         box(
+            shinytip::tip_icon(
+              content = if(id == "input") "AssayData!" else "colData!"
+            ),
             title = if (id == "input") "assayData" else "colData",
             status = "primary",
             width = 12,
