@@ -15,10 +15,13 @@
 box_read_table_ui <- function(id) {
     tagList(
         box(
-            shinytip::tip_icon(
-              content = if(id == "input") "AssayData!" else "colData!"
+            
+            title = span(
+              if (id == "input") "assayData" else "colData",
+              shinytip::tip_icon(
+                content = if(id == "input") "AssayData!" else "colData!"
+              )
             ),
-            title = if (id == "input") "assayData" else "colData",
             status = "primary",
             width = 12,
             solidHeader = TRUE,
