@@ -19,7 +19,8 @@ box_read_table_ui <- function(id) {
             title = span(
               if (id == "input") "assayData" else "colData",
               shinytip::tip_icon(
-                content = if(id == "input") "AssayData!" else "colData!"
+                content = if(id == "input") "Quantitative data and feature annotations" else "Sample annotation",
+                position = "right"
               )
             ),
             status = "primary",
