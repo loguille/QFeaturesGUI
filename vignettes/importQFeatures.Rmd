@@ -36,11 +36,11 @@ knitr::include_graphics("screenshots/import.png")
 
 The first step to create a QFeatures object is to provide two tables:
 
-- An Input Table: The input table is generated after the identification and
+- A assayData Table : The assayData table is generated after the identification and
 quantification of the MS spectra by a pre-processing software such as MaxQuant,
 ProteomeDiscoverer or MSFragger .
 
-- A Sample Table: The sample table contains the experimental design generated
+- A colData Table: The colData table contains the experimental design generated
 by the researcher. The rows of the sample table correspond to a sample in the
 experiment and the columns correspond to the available annotations about the
 sample.
