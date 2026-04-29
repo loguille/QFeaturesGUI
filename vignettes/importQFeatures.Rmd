@@ -26,11 +26,11 @@ knitr::opts_chunk$set(
 )
 ```
 
-*WIP*
-
 # Create a QFeatures object
-
-![A view of the import section. Divided into three different boxes; Input Table, Sample Table and QFeatures Converter](screenshots/import_section.jpg)
+ 
+```{r, echo = FALSE, out.width="100%", fig.cap="A view of the import section."}
+knitr::include_graphics("screenshots/import.png")
+```
 
 ## Table imports
 
@@ -79,8 +79,14 @@ Sample Table box (red box `B`).
 
 ## QFeatures conversion
 
+```{r, echo = FALSE, fig.cap="A view of the conversion and download sections."}
+knitr::include_graphics("screenshots/conversion_download.png")
+```
+
+![A view of the conversion and download sections.](screenshots/conversion_download.png){width=200%}
+
 The QFeatures converter tool is available on the right side of the application
-in the QFeatures Converter box (red box `C`). The first step to perform a
+in the QFeatures Converter box (`C`). The first step to perform a
 QFeatures conversion is to define the columns that will be used to create the
 links between the two tables. This can be done in the Parameters box (purple
 box):
@@ -103,17 +109,19 @@ button.
 
 ## QFeatures object export
 
-A QFeatures Preview panel is now visible in the Preview QFeatures box (green
-box). Check with this preview if the conversion process went fine. By clicking
+A QFeatures Preview panel is now visible in the Preview QFeatures box (
+`D`). Check with this preview if the conversion process went fine. By clicking
 on a row (corresponding to an assay), the selected assay will appear below,
 once again check if everything looks as expected.
 
-Once everything looks fine, you can continue the analysis using QFeaturesGUI (the
-QFeatures object will be available for the other sections of the app) or
-download the QFeatures to use it with R.
+Once everything looks fine, you can download the QFeatures to use it with R or 
+continue the analysis using processQFeatures function.
 
-To download click on the `Download` button, this will download a `.rds` file
-containing the QFeatures object on your computer. Choose the destination
-folder, the name of the file and click on save. Your QFeatures object is now
-available on your computer, it can be used in combination with the scp package
-to continue the data processing.
+To download click on the `Download` button (`E`), this will download a `.zip` file
+containing *initial_QFeatures.rds* the QFeatures object on your computer, 
+*importQFeatures_script.R* corresponding to the code lines used to generate the 
+QFeatures object, and *initial_QFeatures_sessionInfo.html* containing a view of 
+all packages and version used to generate the QFeatures object. Choose the 
+destination folder, the name of the folder and click on save. Your QFeatures object
+is now available on your computer, it can be used in combination with the scp 
+package to continue the data processing.
