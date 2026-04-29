@@ -83,8 +83,6 @@ Sample Table box (red box `B`).
 knitr::include_graphics("screenshots/conversion_download.png")
 ```
 
-![A view of the conversion and download sections.](screenshots/conversion_download.png){width=200%}
-
 The QFeatures converter tool is available on the right side of the application
 in the QFeatures Converter box (`C`). The first step to perform a
 QFeatures conversion is to define the columns that will be used to create the
