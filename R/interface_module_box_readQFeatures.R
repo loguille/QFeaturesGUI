@@ -30,13 +30,28 @@ box_readqfeatures_ui <- function(id) {
                 id = NS(id, "parameters"),
                 selectInput(
                     inputId = NS(id, "run_col"),
-                    "Run/Batch column :",
+                    span(
+                        "Run/Batch column :",
+                         shinytip::tip_icon(
+                           content =  "For the multi-set case, the column assayData that contains\
+                           the runs/batches.",
+                           position = "right",
+                           length = "l"
+                        )      
+                    ),
                     choices = NULL,
                     selected = "NULL"
                 ),
                 selectInput(
                     inputId = NS(id, "quant_cols"),
-                    "Quantitative column : (Only relevant without sample table)",
+                    span("Quantitative column :",
+                         shinytip::tip_icon(
+                            content = "Only relevant without a colData table. The column(s) of the \
+                            assayData that contain the quantitative data.",
+                            position = "right",
+                            length = "l"
+                         )
+                    ),
                     choices = NULL,
                     multiple = TRUE
                 ),
@@ -101,7 +116,15 @@ box_readqfeatures_ui <- function(id) {
             hidden(
                 downloadButton(
                     outputId = NS(id, "downloadQFeatures"),
-                    "Download QFeatures object",
+                    span("Download QFeatures object",
+                         shinytip::tip_icon(
+                           content = "Download zip file containing QFeatures object, \
+                           the script used to generate this object and the R sessionInfo\
+                           containing package and version used for the script.",
+                           position = "right",
+                           length = "l"
+                         )
+                    ),
                     class = "load-button",
                     style = "width: 100%;"
                 )
