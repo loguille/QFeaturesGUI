@@ -40,7 +40,7 @@ Imports:
     matrixStats,
     MsCoreUtils,
     waiter,
-    shinytip
+    daattali/shinytip
 Depends:
     shinyBS,
     R (>= 4.3.0)
