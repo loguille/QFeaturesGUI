@@ -18,7 +18,7 @@ box_read_table_ui <- function(id) {
             
             title = span(
               if (id == "input") "assayData" else "colData",
-              shinytip::tip_icon(
+              tip_icon(
                 content = if(id == "input"){
                     "A data.frame or any object that can be coerce into a data.frame,\
                     holding the quantitative assay. This data.frame is typically \
