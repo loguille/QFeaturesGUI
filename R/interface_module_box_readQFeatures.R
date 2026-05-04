@@ -33,7 +33,7 @@ box_readqfeatures_ui <- function(id) {
                     inputId = NS(id, "run_col"),
                     span(
                         "Run/Batch column :",
-                         shinytip::tip_icon(
+                         tip_icon(
                            content =  "For the multi-set case, the column assayData that contains\
                            the runs/batches.",
                            position = "right",
@@ -46,7 +46,7 @@ box_readqfeatures_ui <- function(id) {
                 selectInput(
                     inputId = NS(id, "quant_cols"),
                     span("Quantitative column :",
-                         shinytip::tip_icon(
+                         tip_icon(
                             content = "Only relevant without a colData table. The column(s) of the \
                             assayData that contain the quantitative data.",
                             position = "right",
@@ -118,7 +118,7 @@ box_readqfeatures_ui <- function(id) {
                 downloadButton(
                     outputId = NS(id, "downloadQFeatures"),
                     span("Download QFeatures object",
-                         shinytip::tip_icon(
+                         tip_icon(
                            content = "Download zip file containing QFeatures object, \
                            the script used to generate this object and the R sessionInfo\
                            containing package and version used for the script.",

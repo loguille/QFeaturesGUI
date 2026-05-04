@@ -17,7 +17,7 @@ header <- function(title) {
           type = "notifications",
           badgeStatus = NULL,
           icon = icon("circle-question"),
-          shinydashboardPlus::notificationItem(
+          notificationItem(
             text = "Online Documentation",
             icon = icon("arrow-up-right-from-square"),
             status = "success",
