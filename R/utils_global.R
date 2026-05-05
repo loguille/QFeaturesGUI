@@ -1604,7 +1604,7 @@ add_joined_assay_to_global_rv <- function(processed_qfeatures, step_number, feat
 #' @return A tagList containing the trigger element with
 #'   the tooltip attached.
 #'
-#' @importFrom shiny tags  
+#' @importFrom shiny tags tagAppendAttributes
 #'
 #' @examples
 #' ## Plain text trigger with info icon
