@@ -12,7 +12,6 @@
 #' @importFrom shinydashboard infoBoxOutput
 #' @importFrom DT dataTableOutput
 #' @importFrom shinyjs disabled hidden
-#' @importFrom shinytip tip_icon
 #'
 box_readqfeatures_ui <- function(id) {
     tagList(

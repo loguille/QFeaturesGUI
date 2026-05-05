@@ -10,7 +10,6 @@
 #' @importFrom shinydashboardPlus box
 #' @importFrom DT dataTableOutput
 #' @importFrom shinyjs disabled
-#' @importFrom shinytip tip tip_icon
 #'
 box_read_table_ui <- function(id) {
     tagList(
