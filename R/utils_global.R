@@ -1581,3 +1581,79 @@ add_joined_assay_to_global_rv <- function(processed_qfeatures, step_number, feat
   )
   
 }
+
+#' Create tooltip
+#'
+#' @description
+#' A wrapper that creates a Bootstrap 3 compatible tooltip.
+#'
+#' @param trigger A tag or character(1) to which
+#'   the tooltip is attached. Can be any Shiny UI element such as a
+#'   actionButton, tags$span, or
+#'   plain text. When character(1) is provided, an info icon is
+#'   appended to the text.
+#' @param tooltipText character(1) The text to display inside the
+#'   tooltip popup.
+#' @param placement character(1) The placement of the tooltip relative
+#'   to the trigger element. One of "right" (default), "left",
+#'   "top", or "bottom".
+#' @param icon character(1) The FontAwesome icon class to use as the
+#'   tooltip indicator when trigger is a character(1).
+#'   Defaults to "fa-info-circle". Ignored if trigger is a tag.
+#'
+#' @return A tagList containing the trigger element with
+#'   the tooltip attached.
+#'
+#' @importFrom shiny tags  
+#'
+#' @examples
+#' ## Plain text trigger with info icon
+#' bs3Tooltip(
+#'     trigger = "assayData",
+#'     tooltipText = paste0(
+#'         "A data.frame or any object that can be coerced into a data.frame, ",
+#'         "holding the quantitative assay."
+#'     )
+#' )
+#'
+#' ## Button trigger
+#' bs3Tooltip(
+#'     trigger = shiny::actionButton("btn", "Import"),
+#'     tooltipText = "Click to import the data",
+#'     placement = "top"
+#' )
+#'
+#' @rdname INTERNAL_bs3Tooltip
+#' @keywords internal
+#' 
+bs3Tooltip <- function(trigger,
+                       tooltipText,
+                       placement = c("right", "left", "top", "bottom"),
+                       icon = "fa-info-circle") {
+  stopifnot(
+    is.character(tooltipText), length(tooltipText) == 1L,
+    is.character(icon), length(icon) == 1L
+  )
+  placement <- match.arg(placement)
+  
+  if (is.character(trigger)) {
+    stopifnot(length(trigger) == 1L)
+    trigger <- tags$span(
+      trigger,
+      tags$i(
+        class = paste("fa", icon),
+        style = "cursor: pointer; margin-left: 5px;"
+      )
+    )
+  } else if (!inherits(trigger, "shiny.tag")) {
+    stop("'trigger' must be a character(1) or a Shiny tag object.")
+  }
+  
+  tagAppendAttributes(
+    trigger,
+    title = tooltipText,
+    `data-toggle` = "tooltip",
+    `data-placement` = placement,
+    style = "cursor: pointer;"
+  )
+}
