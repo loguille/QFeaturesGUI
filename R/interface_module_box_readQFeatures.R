@@ -32,25 +32,24 @@ box_readqfeatures_ui <- function(id) {
                 selectInput(
                     inputId = NS(id, "run_col"),
                     span(
-                        "Run/Batch column :",
-                         tip_icon(
-                           content =  "For the multi-set case, the column assayData that contains\
+                         bs3Tooltip(
+                           trigger = "Run/Batch column :",
+                           tooltipText =  "For the multi-set case, the column assayData that contains\
                            the runs/batches.",
-                           position = "right",
-                           length = "l"
-                        )      
+                           placement = "bottom"
+                        )
                     ),
                     choices = NULL,
                     selected = "NULL"
                 ),
                 selectInput(
                     inputId = NS(id, "quant_cols"),
-                    span("Quantitative column :",
-                         tip_icon(
-                            content = "Only relevant without a colData table. The column(s) of the \
+                    span(
+                         bs3Tooltip(
+                            trigger = "Quantitative column :",
+                            tooltipText = "Only relevant without a colData table. The column(s) of the \
                             assayData that contain the quantitative data.",
-                            position = "right",
-                            length = "l"
+                            placement = "bottom"
                          )
                     ),
                     choices = NULL,
@@ -117,13 +116,13 @@ box_readqfeatures_ui <- function(id) {
             hidden(
                 downloadButton(
                     outputId = NS(id, "downloadQFeatures"),
-                    span("Download QFeatures object",
-                         tip_icon(
-                           content = "Download zip file containing QFeatures object, \
+                    span(
+                         bs3Tooltip(
+                           trigger = "Download QFeatures object",
+                           tooltipText = "Download zip file containing QFeatures object, \
                            the script used to generate this object and the R sessionInfo\
                            containing package and version used for the script.",
-                           position = "right",
-                           length = "l"
+                           placement = "top"
                          )
                     ),
                     class = "load-button",
