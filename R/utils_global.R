@@ -1649,11 +1649,30 @@ bs3Tooltip <- function(trigger,
     stop("'trigger' must be a character(1) or a Shiny tag object.")
   }
   
-  tagAppendAttributes(
-    trigger,
-    title = tooltipText,
-    `data-toggle` = "tooltip",
-    `data-placement` = placement,
-    style = "cursor: pointer;"
+  existing_style <- trigger$attribs$style
+  merged_style <- if (is.null(existing_style) || !nzchar(existing_style)) {
+    "cursor: pointer;"
+  } else {
+    paste0(sub(";?\\s*$", "", existing_style), "; cursor: pointer;")
+  }
+  
+  htmltools::tagList(
+    htmltools::singleton(
+      shiny::tags$script(shiny::HTML(
+        "$(function() {
+             $('body').tooltip({
+               selector: '[data-toggle=\"tooltip\"]',
+               container: 'body'
+             });
+           });"
+      ))
+    ),
+    tagAppendAttributes(
+      trigger,
+      title = tooltipText,
+      `data-toggle` = "tooltip",
+      `data-placement` = placement,
+      style = merged_style
+    )
   )
 }
