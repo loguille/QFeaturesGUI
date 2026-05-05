@@ -36,12 +36,12 @@ knitr::include_graphics("screenshots/import.png")
 
 The first step to create a QFeatures object is to provide two tables:
 
-- A assayData Table : The assayData table is generated after the identification and
+- An assayData Table: The assayData table is generated after the identification and
 quantification of the MS spectra by a pre-processing software such as MaxQuant,
 ProteomeDiscoverer or MSFragger .
 
 - A colData Table: The colData table contains the experimental design generated
-by the researcher. The rows of the sample table correspond to a sample in the
+by the researcher. The rows of the colData table correspond to a sample in the
 experiment and the columns correspond to the available annotations about the
 sample.
 
@@ -113,13 +113,13 @@ on a row (corresponding to an assay), the selected assay will appear below,
 once again check if everything looks as expected.
 
 Once everything looks fine, you can download the QFeatures to use it with R or 
-continue the analysis using processQFeatures function.
+continue the analysis using `processQFeatures()` function.
 
 To download click on the `Download` button (`E`), this will download a `.zip` file
 containing *initial_QFeatures.rds* the QFeatures object on your computer, 
 *importQFeatures_script.R* corresponding to the code lines used to generate the 
 QFeatures object, and *initial_QFeatures_sessionInfo.html* containing a view of 
-all packages and version used to generate the QFeatures object. Choose the 
+all packages and versions used to generate the QFeatures object. Choose the 
 destination folder, the name of the folder and click on save. Your QFeatures object
 is now available on your computer, it can be used in combination with the scp 
 package to continue the data processing.
