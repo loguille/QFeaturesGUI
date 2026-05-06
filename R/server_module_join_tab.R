@@ -8,6 +8,7 @@
 #' @importFrom shiny moduleServer updateSelectInput observeEvent eventReactive is.reactive
 #' @importFrom MultiAssayExperiment getWithColData
 #' @importFrom QFeatures joinAssays
+#' @importFrom stringr str_detect
 #'
 server_module_join_tab <- function(id, step_number, step_rv, parent_rv) {
   moduleServer(id, function(input, output, session) {
