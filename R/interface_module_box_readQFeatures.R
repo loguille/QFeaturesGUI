@@ -31,11 +31,11 @@ box_readqfeatures_ui <- function(id) {
                 selectInput(
                     inputId = NS(id, "run_col"),
                     span(
-                         bs3Tooltip(
-                           trigger = "Run/Batch column :",
-                           tooltipText =  "For the multi-set case, the column assayData that contains\
+                        bs3Tooltip(
+                            trigger = "Run/Batch column :",
+                            tooltipText = "For the multi-set case, the column assayData that contains\
                            the runs/batches.",
-                           placement = "bottom"
+                            placement = "bottom"
                         )
                     ),
                     choices = NULL,
@@ -44,12 +44,12 @@ box_readqfeatures_ui <- function(id) {
                 selectInput(
                     inputId = NS(id, "quant_cols"),
                     span(
-                         bs3Tooltip(
+                        bs3Tooltip(
                             trigger = "Quantitative column :",
                             tooltipText = "Only relevant without a colData table. The column(s) of the \
                             assayData that contain the quantitative data.",
                             placement = "bottom"
-                         )
+                        )
                     ),
                     choices = NULL,
                     multiple = TRUE
@@ -113,21 +113,21 @@ box_readqfeatures_ui <- function(id) {
                 )
             ),
             hidden(
-                    div(
-                      id =  NS(id, "download_qfeatures_object"),
-                         bs3Tooltip(
-                           trigger = shiny::downloadButton(
-                             outputId = NS(id, "downloadQFeatures"),
-                             "Download QFeatures object",
-                             class = "load-button",
-                             style = "width: 100%;"
-                           ),
-                           tooltipText = "Download zip file containing QFeatures object, \
+                div(
+                    id = NS(id, "download_qfeatures_object"),
+                    bs3Tooltip(
+                        trigger = shiny::downloadButton(
+                            outputId = NS(id, "downloadQFeatures"),
+                            "Download QFeatures object",
+                            class = "load-button",
+                            style = "width: 100%;"
+                        ),
+                        tooltipText = "Download zip file containing QFeatures object, \
                            the script used to generate this object and the R sessionInfo\
                            containing package and version used for the script.",
-                           placement = "top"
-                         )
-                    )    
+                        placement = "top"
+                    )
+                )
             )
         )
     )
