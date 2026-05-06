@@ -113,20 +113,21 @@ box_readqfeatures_ui <- function(id) {
                 )
             ),
             hidden(
-                downloadButton(
-                    outputId = NS(id, "downloadQFeatures"),
-                    span(
+                    div(
+                      id =  NS(id, "download_qfeatures_object"),
                          bs3Tooltip(
-                           trigger = "Download QFeatures object",
+                           trigger = shiny::downloadButton(
+                             outputId = NS(id, "downloadQFeatures"),
+                             "Download QFeatures object",
+                             class = "load-button",
+                             style = "width: 100%;"
+                           ),
                            tooltipText = "Download zip file containing QFeatures object, \
                            the script used to generate this object and the R sessionInfo\
                            containing package and version used for the script.",
                            placement = "top"
                          )
-                    ),
-                    class = "load-button",
-                    style = "width: 100%;"
-                )
+                    )    
             )
         )
     )
