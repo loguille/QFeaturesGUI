@@ -134,3 +134,5 @@ Once these two variable has been set click on `Aggregate`.
 An aggregation boxplot will be display. This boxplot shows a feature color by a value of the colData.
 
 # Join
+
+Join tab will combine the results of previous step into one for downstream analysis or for export, just need a new name for the new dataset. Then click on `Join and save the processed sets`.
