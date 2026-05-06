@@ -32,7 +32,7 @@ box_readqfeatures_server <- function(id, input_table, sample_table) {
         })
         observeEvent(input$convert, {
             shinyjs::show("qfeatures_preview_box")
-            shinyjs::show("downloadQFeatures")
+            shinyjs::show("download_qfeatures_object")
         })
         qfeatures <- eventReactive(input$convert, {
             with_task_loader(
