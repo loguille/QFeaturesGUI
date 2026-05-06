@@ -107,5 +107,30 @@ QFeatures object can be normalised on this step. The user can choose between dif
 
 - Using `quantiles` or `quantiles.robust` applies (robust) quantile normalisation, as implemented in `preprocessCore::normalize.quantiles()` and `preprocessCore::normalize.quantiles.robust()`. `vsn` uses `vsn::vsn2()` function. Note that the latter also glog-transforms the intensities. See respective manuals for more details and functions arguments.
 
-Once the normalisation method is selected you can click on `Apply normalisation` (`A`), this will display the post normalisation plot (`B`). Once this is done click on `Save the processed sets`. 
+Once the normalisation method is selected you can click on `Apply normalisation` (`A`), this will display the post normalisation density plot (`B`). Once this is done click on `Save the processed sets`. 
 
+# Aggregation
+
+At this stage, it is possible to use the peptide-level intensities or aggregate the peptide-level data into protein intensities. 
+
+To perform this step a function used for quantitative feature aggregation is needed using `function to aggregate` (`A`). This function takes a matrix as input and returns a vector of length equal to `ncol(x)`. Functions can be one of :
+
+- `MsCoreUtils::medianPolish()` to fits an additive model (two way of decomposition) using Tukey's median polish_procedure using `stats::medpolish()`.
+
+- `MsCoreUtils::robustSummary` to calculate a robust aggregation using `MASS::rlm()` (default).
+
+- `base::colMeans()` to use the mean of each column.
+
+- `matrixStats::colMedians()` to use the median of each column.
+
+- `base::colSums()` to use the sum of each column.
+
+See `MsCoreUtils::aggregate_by_vector()` for more aggregatiobn functions.
+
+A rowData variable (`B`) is also needed defining how to aggregate the features of the assays.
+
+Once these two variable has been set click on `Aggregate`.
+
+An aggregation boxplot will be display. This boxplot shows a feature color by a value of the colData.
+
+# Join
