@@ -100,11 +100,19 @@ qf <- aggregateFeatures(qf,
 \tfun = %s, 
 \tfcol = '%s', 
 \tna.rm = TRUE
-)\n",
+)
+for (i in 1:length(step%s_setNames)){
+\tassayData <- assay(qf[[step%s_setNames[i]]])
+\tassayData[is.nan(assayData)] <- NA_real_
+\tassay(qf[[step%s_setNames[i]]]) <- assayData
+}\n",
   step_number-1,
   step_number,
   method,
-  fcol
+  fcol,
+  step_number,
+  step_number,
+  step_number
   )
   codeLines
 }

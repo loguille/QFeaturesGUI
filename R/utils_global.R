@@ -1472,7 +1472,8 @@ annotation_cols <- function(x, what) {
 #'   the features within each assay. This variable is either a character or a (possibly
 #'   sparse) matrix.
 #' @return A `QFeatures` object with assays aggregated according to `fcol` using the
-#'   selected `method`.
+#'   selected `method`. Any `NaN` values produced by aggregation are converted
+#'   to `NA`.
 #' @rdname INTERNAL_aggregation_qfeatures
 #' @keywords internal
 #' @importFrom QFeatures normalize QFeatures aggregateFeatures
@@ -1483,6 +1484,21 @@ annotation_cols <- function(x, what) {
 #'
 aggregation_qfeatures <- function(qfeatures, method,
                                   fcol) {
+    aggregation_fun <- list(
+        robustSummary = MsCoreUtils::robustSummary,
+        medianPolish = MsCoreUtils::medianPolish,
+        colMeans = base::colMeans,
+        colMedians = matrixStats::colMedians,
+        colSums = base::colSums
+    )[[method]]
+    safe_aggregation_fun <- function(x, ...) {
+        out <- aggregation_fun(x, ...)
+        if (is.numeric(out)) {
+            out[is.nan(out)] <- NA_real_
+        }
+        out
+    }
+
     n <- length(qfeatures)
     caption <- if (n > 0L) {
         paste0("Aggregation of 1/", n, " sets")
@@ -1497,13 +1513,7 @@ aggregation_qfeatures <- function(qfeatures, method,
         task_loader_update(loader, paste0("Aggregation of ", i, "/", n, " sets"))
         aggregateFeatures(
             object = qfeatures[[name]],
-            fun = list(
-                robustSummary = MsCoreUtils::robustSummary,
-                medianPolish = MsCoreUtils::medianPolish,
-                colMeans = base::colMeans,
-                colMedians = matrixStats::colMedians,
-                colSums = base::colSums
-            )[[method]],
+            fun = safe_aggregation_fun,
             fcol = fcol,
             na.rm = TRUE
         )
