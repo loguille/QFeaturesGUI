@@ -48,6 +48,7 @@ interface_module_workflow_config_tab <- function(id, initial_steps) {
                         tags$li("Filtering NAs by Features"),
                         tags$li("Filtering NAs by Samples"),
                         tags$li("Normalisation"),
+                        tags$li("Zero to NA"),
                         tags$li("Aggregation"),
                         tags$li("Join"),
                         tags$li("Aggregation")
@@ -90,6 +91,14 @@ interface_module_workflow_config_tab <- function(id, initial_steps) {
                     tags$p(
                         "Use the pre/post density plots to compare distribution",
                         "changes and select the most appropriate method."
+                    ),
+                    doc_section_header(
+                        "Zero to NA",
+                        "https://rformassspectrometry.github.io/QFeatures/reference/QFeatures-missing-data.html"
+                    ),
+                    tags$p(
+                        "Replace all zero intensity values with NA across the",
+                        "selected sets."
                     ),
                     doc_section_header(
                         "Filtering Missing Values by Samples",
@@ -153,6 +162,7 @@ interface_module_workflow_config_tab <- function(id, initial_steps) {
                                                 "Sample Filtering",
                                                 "Feature Filtering",
                                                 "Normalisation",
+                                                "Zero to NA",
                                                 "Filtering NAs by Features",
                                                 "Filtering NAs by Samples",
                                                 "Aggregation",
