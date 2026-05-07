@@ -152,3 +152,7 @@ knitr::include_graphics("screenshots/join.jpg")
 ```
 
 Join tab will combine the results of previous step into one for downstream analysis or for export, just need a new name (`A`) for the new dataset. Then click on `Join and save the processed sets` (`B`).
+
+# Summary
+
+The summary page return the different assays present in the QFeatures object, it also shows how the different assays are linked with each other. Finally a download button will return a zip file containing the final QFeatures object the script that has been used to generate the QFeatures object and the Rsession with the version of the package.
