@@ -1665,5 +1665,4 @@ bs3Tooltip <- function(trigger,
             style = merged_style
         )
     )
-  )
 }
