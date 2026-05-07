@@ -12,11 +12,13 @@
 #' @importFrom shiny moduleServer eventReactive observeEvent renderUI reactiveValues observe NS reactive req reactiveVal icon
 #' @importFrom htmltools tags
 #' @importFrom shinydashboard renderInfoBox infoBox
-server_module_filtering_tab <- function(id,
-    step_number,
-    step_rv,
-    parent_rv,
-    type = c("samples", "features")) {
+server_module_filtering_tab <- function(
+      id,
+      step_number,
+      step_rv,
+      parent_rv,
+      type = c("samples", "features")
+) {
     type <- match.arg(type)
 
     moduleServer(id, function(input, output, session) {
@@ -219,7 +221,7 @@ server_module_filtering_tab <- function(id,
                             type = paste0(type, "_filtering")
                         )
                         step_rv(step_rv() + 1L)
-                        global_rv$code_lines[[paste0("Initialization_names_",step_number)]] <- codeGeneratorInitialization(qf = .qf$qfeatures, step_number = step_number)
+                        global_rv$code_lines[[paste0("Initialization_names_", step_number)]] <- codeGeneratorInitialization(qf = .qf$qfeatures, step_number = step_number)
                         global_rv$code_lines[[paste0("filtering_", type, "_", step_number)]] <- codeGeneratorFiltering(qf = .qf$qfeatures, condition = condition_specs_list(), type = type, step_number = step_number)
                     }
                 )

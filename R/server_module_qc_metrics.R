@@ -26,7 +26,7 @@ server_module_qc_metrics <- function(id, assays_to_process) {
                 choices = names(choices)
             )
         })
-        
+
         single_assay <- reactive({
             req(input$selected_assay)
             req(assays_to_process())
@@ -39,35 +39,35 @@ server_module_qc_metrics <- function(id, assays_to_process) {
             ))
         })
         annotation_names <- reactive({
-          req(single_assay())
-          if (input$assay_type == "features") {
-            c("NULL", colnames(rowData(single_assay())))
-          } else {
-            c("NULL", colnames(colData(single_assay())))
-          }
+            req(single_assay())
+            if (input$assay_type == "features") {
+                c("NULL", colnames(rowData(single_assay())))
+            } else {
+                c("NULL", colnames(colData(single_assay())))
+            }
         })
-        
+
         observe({
-          req(single_assay())
-          req(annotation_names())
-          stopifnot(is(single_assay(), "SummarizedExperiment"))
-          updateSelectInput(session,
-                            "pca_color",
-                            choices = annotation_names(),
-                            selected = "NULL"
-          )
+            req(single_assay())
+            req(annotation_names())
+            stopifnot(is(single_assay(), "SummarizedExperiment"))
+            updateSelectInput(session,
+                "pca_color",
+                choices = annotation_names(),
+                selected = "NULL"
+            )
         })
 
         server_module_pca_box(
-          id = "features",
-          single_assay = single_assay,
-          method = reactive(input$selected_method),
-          pca_type = reactive(input$assay_type),
-          scale = reactive(input$scale),
-          center = reactive(input$center),
-          color = reactive(input$pca_color),
-          show_legend = reactive(input$show_legend),
-          color_width = reactive(input$color_width)
+            id = "features",
+            single_assay = single_assay,
+            method = reactive(input$selected_method),
+            pca_type = reactive(input$assay_type),
+            scale = reactive(input$scale),
+            center = reactive(input$center),
+            color = reactive(input$pca_color),
+            show_legend = reactive(input$show_legend),
+            color_width = reactive(input$color_width)
         )
 
         server_module_viz_box("viz_box", assays_to_process)
@@ -86,7 +86,7 @@ server_module_qc_metrics <- function(id, assays_to_process) {
 #' @param show_legend a boolean that specifies if the legend should be shown
 #' @param color which metadata use for color
 #' @param color_width how many letter display in the legend
-#' 
+#'
 #' @return A shiny module server function that contains the PCA logic
 #' @rdname INTERNAL_server_module_pca_box
 #' @keywords internal
@@ -99,14 +99,14 @@ server_module_qc_metrics <- function(id, assays_to_process) {
 #'
 server_module_pca_box <- function(id, single_assay, method, pca_type, scale, center, show_legend, color, color_width) {
     moduleServer(id, function(input, output, session) {
-      stopifnot(is.reactive(method))
-      stopifnot(is.reactive(pca_type))
-      stopifnot(is.reactive(scale))
-      stopifnot(is.reactive(center))
-      stopifnot(is.reactive(show_legend))
-      stopifnot(is.reactive(color))
-      stopifnot(is.reactive(color_width))
-        
+        stopifnot(is.reactive(method))
+        stopifnot(is.reactive(pca_type))
+        stopifnot(is.reactive(scale))
+        stopifnot(is.reactive(center))
+        stopifnot(is.reactive(show_legend))
+        stopifnot(is.reactive(color))
+        stopifnot(is.reactive(color_width))
+
 
         color_data <- reactive({
             req(single_assay())
