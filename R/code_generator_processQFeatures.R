@@ -232,6 +232,33 @@ for(i in 1:length(step%s_setNames)){
     codeLines
 }
 
+#' @title Code generator for Zero to NA tab
+#' @param step_number The step number
+#'
+#' @return code lines generated
+#' @rdname INTERNAL_codeGeneratorZeroToNA
+#' @keywords internal
+#'
+codeGeneratorZeroToNA <- function(step_number) {
+    codeLines <- sprintf(
+        "####################################
+############ Zero to NA ############
+####################################
+for(i in 1:length(step%s_setNames)){
+\tqf[[step%s_setNames[i]]] <- zeroIsNA(
+\t\tobject = qf[[step%s_setNames[i]]]
+\t)
+\tqf <- addAssayLink(qf, from = step%s_setNames[i], to = step%s_setNames[i])
+}\n",
+        step_number - 1,
+        step_number,
+        step_number - 1,
+        step_number - 1,
+        step_number
+    )
+    codeLines
+}
+
 #' @title Code generator for filtering tab
 #' @param qf QFeatures object
 #' @param condition A list of filtering condition specifications
