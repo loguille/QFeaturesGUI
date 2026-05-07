@@ -13,26 +13,26 @@
 interface_module_missing_values_tab <- function(id, type) {
     tagList(
         box(
-            title = "Settings",
-            status = "primary",
-            width = 6,
-            solidHeader = TRUE,
-            collapsible = TRUE,
-            numericInput(
-                inputId = NS(id, paste0("threshold_", type)),
-                label = paste("Threshold value for", type),
-                value = 0.95,
-                min = 0, max = 1,
-                step = 0.05
-            ),
-            infoBoxOutput(
-                NS(id, paste0("nb_removed_", type)),
-                width = 6
-            ),
-            infoBoxOutput(
-                NS(id, paste0("percent_removed_", type)),
-                width = 6
-            )
+          title = "Settings",
+          status = "primary",
+          width = 6,
+          solidHeader = TRUE,
+          collapsible = TRUE,
+          numericInput(
+            inputId = NS(id, paste0("threshold_", type)),
+            label = paste("Threshold value for", type),
+            value = 0.95,
+            min = 0, max = 1,
+            step = 0.05
+          ),
+          infoBoxOutput(
+            NS(id, paste0("nb_removed_", type)),
+            width = 6
+          ),
+          infoBoxOutput(
+            NS(id, paste0("percent_removed_", type)),
+            width = 6
+          )
         ),
         box(
             title = paste("NA by", type),
