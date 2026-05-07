@@ -49,6 +49,7 @@ interface_module_workflow_config_tab <- function(id, initial_steps) {
                         tags$li("Filtering NAs by Samples"),
                         tags$li("Normalisation"),
                         tags$li("Zero to NA"),
+                        tags$li("Log Transform"),
                         tags$li("Aggregation"),
                         tags$li("Join"),
                         tags$li("Aggregation")
@@ -99,6 +100,14 @@ interface_module_workflow_config_tab <- function(id, initial_steps) {
                     tags$p(
                         "Replace all zero intensity values with NA across the",
                         "selected sets."
+                    ),
+                    doc_section_header(
+                        "Log Transform",
+                        "https://rformassspectrometry.github.io/QFeatures/reference/QFeatures-processing.html"
+                    ),
+                    tags$p(
+                        "Apply a logarithmic transformation with configurable",
+                        "base and pseudocount."
                     ),
                     doc_section_header(
                         "Filtering Missing Values by Samples",
@@ -163,6 +172,7 @@ interface_module_workflow_config_tab <- function(id, initial_steps) {
                                                 "Feature Filtering",
                                                 "Normalisation",
                                                 "Zero to NA",
+                                                "Log Transform",
                                                 "Filtering NAs by Features",
                                                 "Filtering NAs by Samples",
                                                 "Aggregation",
