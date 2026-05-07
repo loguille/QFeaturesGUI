@@ -606,6 +606,7 @@ check_prefilled_steps <- function(prefilledSteps) {
         sample_filtering = "Sample Filtering",
         normalisation = "Normalisation",
         zero_to_na = "Zero to NA",
+        log_transform = "Log Transform",
         feature_filtering = "Feature Filtering",
         missing_values_features = "Filtering NAs by Features",
         missing_values_samples = "Filtering NAs by Samples",

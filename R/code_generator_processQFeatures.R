@@ -259,6 +259,39 @@ for(i in 1:length(step%s_setNames)){
     codeLines
 }
 
+#' @title Code generator for log transform tab
+#' @param base the logarithm base used during transformation
+#' @param pseudocount pseudocount added before log transformation
+#' @param step_number The step number
+#'
+#' @return code lines generated
+#' @rdname INTERNAL_codeGeneratorLogTransform
+#' @keywords internal
+#'
+codeGeneratorLogTransform <- function(base, pseudocount, step_number) {
+    codeLines <- sprintf(
+        "####################################
+########## Log Transform ###########
+####################################
+for(i in 1:length(step%s_setNames)){
+\tqf[[step%s_setNames[i]]] <- logTransform(
+\t\tobject = qf[[step%s_setNames[i]]],
+\t\tbase = %s,
+\t\tpc = %s
+\t)
+\tqf <- addAssayLink(qf, from = step%s_setNames[i], to = step%s_setNames[i])
+}\n",
+        step_number - 1,
+        step_number,
+        step_number - 1,
+        base,
+        pseudocount,
+        step_number - 1,
+        step_number
+    )
+    codeLines
+}
+
 #' @title Code generator for filtering tab
 #' @param qf QFeatures object
 #' @param condition A list of filtering condition specifications
