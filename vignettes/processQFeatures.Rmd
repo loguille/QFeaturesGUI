@@ -91,13 +91,21 @@ Once the filtering has been done you can save by using the button `Save the proc
 
 # Filtering missing values by samples/features
 
+```{r, echo = FALSE, out.width="100%", fig.cap= "post-Filtering metrics section"}
+knitr::include_graphics("screenshots/missing_values_filtering.jpg")
+```
+
 Missing values can be very numerous in certain proteomics experiments and need to be dealt with carefully.
 
 In this step you will have to define a threshold value for the percent of NA above what a feature/sample should be discard (`A`). By changing this value, the statistics of the number and percent of features/samples removed (`B`) and the associated plot (`C`) will automatically be updated. Once the threshold has been set type on `Save the processed sets` (`D`).
 
 # Normalisation
 
-QFeatures object can be normalised on this step. The user can choose between different type of normalisation method. 
+```{r, echo = FALSE, out.width="100%", fig.cap= "post-Filtering metrics section"}
+knitr::include_graphics("screenshots/normalisation.jpg")
+```
+
+QFeatures object can be normalised on this step. The user can choose between different type of normalisation method (`A`). 
 
 - `sum` and `max`, where each feature's intensity is divided by the maximum or the sum of the feature respectively. These two methods are applied along the features (rows).
 
@@ -107,9 +115,13 @@ QFeatures object can be normalised on this step. The user can choose between dif
 
 - Using `quantiles` or `quantiles.robust` applies (robust) quantile normalisation, as implemented in `preprocessCore::normalize.quantiles()` and `preprocessCore::normalize.quantiles.robust()`. `vsn` uses `vsn::vsn2()` function. Note that the latter also glog-transforms the intensities. See respective manuals for more details and functions arguments.
 
-Once the normalisation method is selected you can click on `Apply normalisation` (`A`), this will display the post normalisation density plot (`B`). Once this is done click on `Save the processed sets`. 
+Once the normalisation method is selected you can click on `Apply normalisation` (`B`), this will display the post normalisation density plot. Once this is done click on `Save the processed sets` (`C`). 
 
 # Aggregation
+
+```{r, echo = FALSE, out.width="100%", fig.cap= "post-Filtering metrics section"}
+knitr::include_graphics("screenshots/aggregate.jpg")
+```
 
 At this stage, it is possible to use the peptide-level intensities or aggregate the peptide-level data into protein intensities. 
 
@@ -135,4 +147,8 @@ An aggregation boxplot will be display. This boxplot shows a feature color by a 
 
 # Join
 
-Join tab will combine the results of previous step into one for downstream analysis or for export, just need a new name for the new dataset. Then click on `Join and save the processed sets`.
+```{r, echo = FALSE, out.width="100%", fig.cap= "post-Filtering metrics section"}
+knitr::include_graphics("screenshots/join.jpg")
+```
+
+Join tab will combine the results of previous step into one for downstream analysis or for export, just need a new name (`A`) for the new dataset. Then click on `Join and save the processed sets` (`B`).
