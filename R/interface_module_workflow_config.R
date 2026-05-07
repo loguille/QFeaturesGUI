@@ -50,6 +50,7 @@ interface_module_workflow_config_tab <- function(id, initial_steps) {
                         tags$li("Normalisation"),
                         tags$li("Zero to NA"),
                         tags$li("Log Transform"),
+                        tags$li("Imputation"),
                         tags$li("Aggregation"),
                         tags$li("Join"),
                         tags$li("Aggregation")
@@ -108,6 +109,14 @@ interface_module_workflow_config_tab <- function(id, initial_steps) {
                     tags$p(
                         "Apply a logarithmic transformation with configurable",
                         "base and pseudocount."
+                    ),
+                    doc_section_header(
+                        "Imputation",
+                        "https://rformassspectrometry.github.io/QFeatures/reference/QFeatures-missing-data.html"
+                    ),
+                    tags$p(
+                        "Impute missing values with one of the available methods",
+                        "and inspect pre/post distributions before saving."
                     ),
                     doc_section_header(
                         "Filtering Missing Values by Samples",
@@ -173,6 +182,7 @@ interface_module_workflow_config_tab <- function(id, initial_steps) {
                                                 "Normalisation",
                                                 "Zero to NA",
                                                 "Log Transform",
+                                                "Imputation",
                                                 "Filtering NAs by Features",
                                                 "Filtering NAs by Samples",
                                                 "Aggregation",

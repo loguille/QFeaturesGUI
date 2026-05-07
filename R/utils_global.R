@@ -607,6 +607,7 @@ check_prefilled_steps <- function(prefilledSteps) {
         normalisation = "Normalisation",
         zero_to_na = "Zero to NA",
         log_transform = "Log Transform",
+        imputation = "Imputation",
         feature_filtering = "Feature Filtering",
         missing_values_features = "Filtering NAs by Features",
         missing_values_samples = "Filtering NAs by Samples",
@@ -938,6 +939,97 @@ normalisation_qfeatures <- function(qfeatures, method) {
     })
     names(el) <- names(qfeatures)
     QFeatures(el, colData = colData(qfeatures))
+}
+
+#' A function that lists the imputation methods supported by the GUI
+#'
+#' @return A named list describing supported imputation methods.
+#' @rdname INTERNAL_imputation_method_specs
+#' @keywords internal
+imputation_method_specs <- function() {
+    list(
+        bpca = list(package = "pcaMethods", default_margin = "1"),
+        knn = list(package = "impute", default_margin = "1"),
+        QRILC = list(package = "imputeLCMD", default_margin = "2"),
+        MLE = list(package = "norm", default_margin = "2"),
+        MinDet = list(package = NULL, default_margin = "2"),
+        MinProb = list(package = "imputeLCMD", default_margin = "2"),
+        min = list(package = NULL),
+        zero = list(package = NULL),
+        nbavg = list(package = NULL, default_margin = "1"),
+        with = list(package = NULL),
+        RF = list(package = "missForest", default_margin = "2"),
+        none = list(package = NULL)
+    )
+}
+
+
+#' A function that returns imputation methods available in the current session
+#'
+#' @return `character()` vector of method names accepted by the GUI.
+#' @rdname INTERNAL_available_imputation_methods
+#' @keywords internal
+available_imputation_methods <- function() {
+    specs <- imputation_method_specs()
+    names(specs)[vapply(specs, function(spec) {
+        is.null(spec$package) || requireNamespace(spec$package, quietly = TRUE)
+    }, logical(1))]
+}
+
+
+#' A function that validates an imputation method before it is used
+#'
+#' @param method `character(1)` imputation method used by `QFeatures::impute`
+#' @return The method specification entry invisibly.
+#' @rdname INTERNAL_assert_imputation_method_available
+#' @keywords internal
+assert_imputation_method_available <- function(method) {
+    specs <- imputation_method_specs()
+    if (!(method %in% names(specs))) {
+        stop("Unknown imputation method: ", method, call. = FALSE)
+    }
+
+    required_package <- specs[[method]]$package
+    if (!is.null(required_package) && !requireNamespace(required_package, quietly = TRUE)) {
+        stop(
+            "Imputation method '", method, "' requires the optional package '",
+            required_package, "'. Install it to use this method.",
+            call. = FALSE
+        )
+    }
+
+    invisible(specs[[method]])
+}
+
+
+#' A function that will impute all assays of a qfeatures object
+#'
+#' @param object `QFeatures` object to impute
+#' @param impute_method `character(1)` imputation method used by `QFeatures::impute`
+#' @param ... additional parameters forwarded to `QFeatures::impute`
+#' @return `QFeatures` object with imputed assays
+#' @rdname INTERNAL_impute_qfeatures
+#' @keywords internal
+impute_qfeatures <- function(object, impute_method, ...) {
+    if (identical(impute_method, "none")) {
+        return(object)
+    }
+
+    assert_imputation_method_available(impute_method)
+
+    source_names <- names(object)
+    imputed_names <- paste0(source_names, "__imputed_tmp")
+    imputed_qf <- QFeatures::impute(
+        object = object,
+        i = seq_along(object),
+        name = imputed_names,
+        method = impute_method,
+        ...
+    )
+
+    out <- suppressMessages(suppressWarnings(imputed_qf[, , imputed_names]))
+    names(out) <- source_names
+    out
 }
 
 

@@ -292,6 +292,68 @@ for(i in 1:length(step%s_setNames)){
     codeLines
 }
 
+#' @title Code generator for imputation tab
+#' @param method imputation method used by `impute`
+#' @param step_number The step number
+#' @param margin optional imputation margin argument
+#' @param q optional quantile argument for `MinDet`/`MinProb`
+#' @param sigma optional sigma argument for `MinProb`/`QRILC`
+#' @param k optional k argument for `nbavg`
+#' @param val optional replacement value argument for `with`
+#'
+#' @return code lines generated
+#' @rdname INTERNAL_codeGeneratorImpute
+#' @keywords internal
+#'
+codeGeneratorImpute <- function(method, step_number, margin = NULL, q = NULL, sigma = NULL, k = NULL, val = NULL) {
+    if (identical(method, "none")) {
+        return(
+            "####################################
+############ Imputation ############
+####################################
+## No imputation applied\n"
+        )
+    }
+
+    arg_lines <- c(paste0("\t\tmethod = '", method, "'"))
+    if (!is.null(margin)) {
+        arg_lines <- c(arg_lines, paste0("\t\tMARGIN = ", as.integer(margin)))
+    }
+    if (!is.null(q)) {
+        arg_lines <- c(arg_lines, paste0("\t\tq = ", q))
+    }
+    if (!is.null(sigma)) {
+        arg_lines <- c(arg_lines, paste0("\t\tsigma = ", sigma))
+    }
+    if (!is.null(k)) {
+        arg_lines <- c(arg_lines, paste0("\t\tk = ", k))
+    }
+    if (!is.null(val)) {
+        arg_lines <- c(arg_lines, paste0("\t\tval = ", val))
+    }
+    args_block <- paste(arg_lines, collapse = ",\n")
+
+    codeLines <- sprintf(
+        "####################################
+############ Imputation ############
+####################################
+for(i in 1:length(step%s_setNames)){
+\tqf[[step%s_setNames[i]]] <- impute(
+\t\tobject = qf[[step%s_setNames[i]]],
+%s
+\t)
+\tqf <- addAssayLink(qf, from = step%s_setNames[i], to = step%s_setNames[i])
+}\n",
+        step_number - 1,
+        step_number,
+        step_number - 1,
+        args_block,
+        step_number - 1,
+        step_number
+    )
+    codeLines
+}
+
 #' @title Code generator for filtering tab
 #' @param qf QFeatures object
 #' @param condition A list of filtering condition specifications
