@@ -6,27 +6,22 @@
 #' @rdname INTERNAL_interface_header
 #' @keywords internal
 #'
-#' @importFrom shinydashboard dropdownMenuOutput
-#' @importFrom shinydashboardPlus dashboardHeader
+#' @importFrom shinydashboard dropdownMenuOutput dropdownMenu
+#' @importFrom shinydashboardPlus dashboardHeader notificationItem
 #'
 header <- function(title) {
-        dashboardHeader(
-            title = title,
-            dropdownMenuOutput("exception_menu"),
-            tags$li(
-                class = "dropdown",
-                bs3Tooltip(
-                    trigger = tags$a(
-                        href = "https://uclouvain-cbio.github.io/QFeaturesGUI/",
-                        target = "_blank",
-                        rel = "noopener noreferrer",
-                        style = "padding-top: 15px; padding-bottom: 15px;",
-                        icon("arrow-up-right-from-square"),
-                        "Documentation"
-                    ),
-                    tooltipText = "Open online documentation",
-                    placement = "bottom"
-                )
-            )
+    dashboardHeader(
+        title = title,
+        dropdownMenuOutput("exception_menu"),
+        dropdownMenu(
+          type = "notifications",
+          badgeStatus = NULL,
+          icon = icon("circle-question"),
+          notificationItem(
+            text = "Online Documentation",
+            icon = icon("arrow-up-right-from-square"),
+            status = "success",
+            href = "https://uclouvain-cbio.github.io/QFeaturesGUI/")
         )
+    )
 }
