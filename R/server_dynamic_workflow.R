@@ -38,8 +38,8 @@ server_dynamic_workflow <- function(input, output, session) {
                 "Normalisation"             = paste0("normalisation_", i, "_v", v),
                 "Filtering NAs by Features" = paste0("missing_values_features_", i, "_v", v),
                 "Filtering NAs by Samples"  = paste0("missing_values_samples_", i, "_v", v),
-                "Aggregation"               = paste0("aggregation_",i,"_v",v),
-                "Join"                      = paste0("join_",i,"_v",v)
+                "Aggregation"               = paste0("aggregation_", i, "_v", v),
+                "Join"                      = paste0("join_", i, "_v", v)
             )
 
             output[[paste0("dynamic_step_ui_", i)]] <- renderUI({
