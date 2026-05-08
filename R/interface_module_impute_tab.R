@@ -24,7 +24,8 @@ interface_module_impute_tab <- function(id) {
                     label = "Imputation method",
                     choices = character(0)
                 ),
-                uiOutput(NS(id, "method_params")),
+                tags$h4("Method documentation"),
+                uiOutput(NS(id, "method_documentation")),
                 br(),
                 actionButton(
                     inputId = NS(id, "apply_impute"),

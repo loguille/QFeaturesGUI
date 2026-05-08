@@ -43,9 +43,17 @@ server_module_log_transform_tab <- function(id, step_number, step_rv, parent_rv)
             }
         })
 
+        selected_base <- reactive({
+            req(input$log_base)
+            base_map <- c(log2 = 2, log10 = 10, ln = exp(1))
+            req(input$log_base %in% names(base_map))
+            unname(base_map[[input$log_base]])
+        })
+
         processed_assays <- eventReactive(input$apply_log_transform, {
             req(parent_assays())
-            req(is.finite(input$log_base), input$log_base > 0, input$log_base != 1)
+            current_base <- selected_base()
+            req(is.finite(current_base), current_base > 0, current_base != 1)
             req(is.finite(input$pseudocount), input$pseudocount >= 0)
             with_task_loader(
                 caption = "Applying log transform and generating post-log transform densities",
@@ -54,7 +62,7 @@ server_module_log_transform_tab <- function(id, step_number, step_rv, parent_rv)
                         log_transform_qfeatures,
                         component_name = "Log transform",
                         qfeatures = parent_assays(),
-                        base = input$log_base,
+                        base = current_base,
                         pseudocount = input$pseudocount
                     )
                 }
@@ -123,7 +131,7 @@ server_module_log_transform_tab <- function(id, step_number, step_rv, parent_rv)
                         step_number = step_number
                     )
                     global_rv$code_lines[[paste0("log_transform_", step_number)]] <- codeGeneratorLogTransform(
-                        base = input$log_base,
+                        base = selected_base(),
                         pseudocount = input$pseudocount,
                         step_number = step_number
                     )
