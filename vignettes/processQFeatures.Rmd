@@ -91,7 +91,7 @@ Once the filtering has been done you can save by using the button `Save the proc
 
 # Filtering missing values by samples/features
 
-```{r, echo = FALSE, out.width="100%", fig.cap= "post-Filtering metrics section"}
+```{r, echo = FALSE, out.width="100%", fig.cap= "Filtering missing values by samples/features page"}
 knitr::include_graphics("screenshots/missing_values_filtering.jpg")
 ```
 
@@ -99,39 +99,9 @@ Missing values can be very numerous in certain proteomics experiments and need t
 
 In this step you will have to define a threshold value for the percent of NA above what a feature/sample should be discard (`A`). By changing this value, the statistics of the number and percent of features/samples removed (`B`) and the associated plot (`C`) will automatically be updated. Once the threshold has been set type on `Save the processed sets` (`D`).
 
-# Zero to NA
-
-This step convert all zero intensities into missing values (NA) in the selected sets
-
-# Log Transformation
-
-When analysing continuous data using parametric methods (such as t-test or linear models), it is often necessary to log-transform the data. 
-
-The Log base is by default set to 2 and a pseudocount value can be added to handle zero values in data before applying logarithm.
-
-# Imputation
-
-There are two types of mechanisms resulting in missing values in LC/MSMS experiments.
-
-- Missing values resulting from absence of detection of a feature, despite ions being present at detectable concentrations. For example in the case of ion suppression or as a results from the stochastic, data-dependant nature of the MS acquisition method. These missing value are expected to be randomly distributed in the data and are defined as *missing at random* (MAR) or *missing completely at random* (MCAR)
-
-- Biologically relevant missing values, resulting from the absence of the low abundance of ions (below the limit of detection of the instrument). These missing values are not expected to be randomly distributed in the data and are defined as *missing not at random* (MNAR).
-
-See [Imputing quantitative proteomics data](https://rformassspectrometry.github.io/QFeatures/articles/Imputation.html) for more informations. 
-
-First choose an imputation method :
-
-- `knn` : Nearest neighbour averaging, as implemented in the [`impute::impute.knn`](https://www.bioconductor.org/packages/release/bioc/html/impute.html) function. Note that this function is used with default parameters. 
-
-- `MinDet` : Performs the imputation of left-censored missing data using a deterministic minimal value approach. Considering an expression data with `n` samples and `p` features, for each sample, the missing entries are replaced with a minimal value observed in that sample. The minimal value observed is estimated as being the q-th quantile (default q = 0.01) of the observed values in that sample. Implemented in the [`imputeLCMD::impute.MinDet`](https://rdrr.io/cran/imputeLCMD/man/impute.MinDet.html). Note that this function is used with default parameters.
-
-- `zero` : Replaces the missing values with 0.
-
-Then click on `Apply imputation`, once the imputation has run the page will display a Post-imputation density plot which you can color by colData. 
-
 # Normalisation
 
-```{r, echo = FALSE, out.width="100%", fig.cap= "post-Filtering metrics section"}
+```{r, echo = FALSE, out.width="100%", fig.cap= "Normalization page"}
 knitr::include_graphics("screenshots/normalisation.jpg")
 ```
 
@@ -147,9 +117,51 @@ QFeatures object can be normalised on this step. The user can choose between dif
 
 Once the normalisation method is selected you can click on `Apply normalisation` (`B`), this will display the post normalisation density plot. Once this is done click on `Save the processed sets` (`C`). 
 
+# Zero to NA
+
+```{r, echo = FALSE, out.width="100%", fig.cap= "Zero to NA page"}
+knitr::include_graphics("screenshots/zero_to_na.jpg")
+```
+
+This step convert all zero intensities into missing values (NA) in the selected sets
+
+# Log Transformation
+
+```{r, echo = FALSE, out.width="100%", fig.cap= "Log transformation page"}
+knitr::include_graphics("screenshots/logTransform.jpg")
+```
+
+When analysing continuous data using parametric methods (such as t-test or linear models), it is often necessary to log-transform the data. 
+
+The Log base is by default set to `log2`, but can also be set to `log10` and `ln` (`A`),  a pseudocount value can be added (`B`) to handle zero values in data before applying logarithm. Then click on `Apply log transform` (`C`), this will display a density plot post log transformation. Once this is done do not forget to click on `Save the processed sets` (`D`).
+
+# Imputation
+
+```{r, echo = FALSE, out.width="100%", fig.cap= "Imputation page"}
+knitr::include_graphics("screenshots/imputation.jpg")
+```
+
+There are two types of mechanisms resulting in missing values in LC/MSMS experiments.
+
+- Missing values resulting from absence of detection of a feature, despite ions being present at detectable concentrations. For example in the case of ion suppression or as a results from the stochastic, data-dependant nature of the MS acquisition method. These missing value are expected to be randomly distributed in the data and are defined as *missing at random* (MAR) or *missing completely at random* (MCAR)
+
+- Biologically relevant missing values, resulting from the absence of the low abundance of ions (below the limit of detection of the instrument). These missing values are not expected to be randomly distributed in the data and are defined as *missing not at random* (MNAR).
+
+See [Imputing quantitative proteomics data](https://rformassspectrometry.github.io/QFeatures/articles/Imputation.html) for more informations. 
+
+First choose an imputation method (`A`):
+
+- `knn` : Nearest neighbour averaging, as implemented in the [`impute::impute.knn`](https://www.bioconductor.org/packages/release/bioc/html/impute.html) function. Note that this function is used with default parameters. 
+
+- `MinDet` : Performs the imputation of left-censored missing data using a deterministic minimal value approach. Considering an expression data with `n` samples and `p` features, for each sample, the missing entries are replaced with a minimal value observed in that sample. The minimal value observed is estimated as being the q-th quantile (default q = 0.01) of the observed values in that sample. Implemented in the [`imputeLCMD::impute.MinDet`](https://rdrr.io/cran/imputeLCMD/man/impute.MinDet.html). Note that this function is used with default parameters.
+
+- `zero` : Replaces the missing values with 0.
+
+Then click on `Apply imputation` (`B`), once the imputation has run the page will display a Post-imputation density plot which you can color by colData (`C`). Once the imputation step is finished, do not forget to `Save the processed sets` (`D`).
+
 # Aggregation
 
-```{r, echo = FALSE, out.width="100%", fig.cap= "post-Filtering metrics section"}
+```{r, echo = FALSE, out.width="100%", fig.cap= "Aggregation page"}
 knitr::include_graphics("screenshots/aggregate.jpg")
 ```
 
@@ -177,12 +189,16 @@ An aggregation boxplot will be display. This boxplot shows a feature color by a 
 
 # Join
 
-```{r, echo = FALSE, out.width="100%", fig.cap= "post-Filtering metrics section"}
+```{r, echo = FALSE, out.width="100%", fig.cap= "Join page"}
 knitr::include_graphics("screenshots/join.jpg")
 ```
 
 Join tab will combine the results of previous step into one for downstream analysis or for export, just need a new name (`A`) for the new dataset. Then click on `Join and save the processed sets` (`B`).
 
 # Summary
+
+```{r, echo = FALSE, out.width="100%", fig.cap= "Summary page"}
+knitr::include_graphics("screenshots/summary.jpg")
+```
 
 The summary page return the different assays present in the QFeatures object, it also shows how the different assays are linked with each other. Finally a download button will return a zip file containing the final QFeatures object the script that has been used to generate the QFeatures object and the Rsession with the version of the package.
