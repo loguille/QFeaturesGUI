@@ -96,7 +96,7 @@ interface_module_workflow_config_tab <- function(id, initial_steps) {
                     ),
                     doc_section_header(
                         "Zero to NA",
-                        "https://rformassspectrometry.github.io/QFeatures/reference/QFeatures-missing-data.html"
+                        "https://uclouvain-cbio.github.io/QFeaturesGUI/articles/processQFeatures.html#zeroisna"
                     ),
                     tags$p(
                         "Replace all zero intensity values with NA across the",
@@ -104,7 +104,7 @@ interface_module_workflow_config_tab <- function(id, initial_steps) {
                     ),
                     doc_section_header(
                         "Log Transform",
-                        "https://rformassspectrometry.github.io/QFeatures/reference/QFeatures-processing.html"
+                        "https://uclouvain-cbio.github.io/QFeaturesGUI/articles/processQFeatures.html#logtransform"
                     ),
                     tags$p(
                         "Apply a logarithmic transformation with configurable",
@@ -112,7 +112,7 @@ interface_module_workflow_config_tab <- function(id, initial_steps) {
                     ),
                     doc_section_header(
                         "Imputation",
-                        "https://rformassspectrometry.github.io/QFeatures/reference/QFeatures-missing-data.html"
+                        "https://uclouvain-cbio.github.io/QFeaturesGUI/articles/processQFeatures.html#imputation"
                     ),
                     tags$p(
                         "Impute missing values with one of the available methods",
