@@ -183,9 +183,9 @@ See `MsCoreUtils::aggregate_by_vector()` for more aggregatiobn functions.
 
 A rowData variable (`B`) is also needed defining how to aggregate the features of the assays.
 
-Once these two variable has been set click on `Aggregate`.
+Once these two variable has been set click on `Aggregate` (`C`).
 
-An aggregation boxplot will be display. This boxplot shows a feature color by a value of the colData.
+An aggregation boxplot will be display. This boxplot shows a feature color by a value of the colData Once the aggregation is done click on `Save the processed sets`.
 
 # Join
 
