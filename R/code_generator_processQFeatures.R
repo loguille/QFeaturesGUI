@@ -295,41 +295,25 @@ for(i in 1:length(step%s_setNames)){
 #' @title Code generator for imputation tab
 #' @param method imputation method used by `impute`
 #' @param step_number The step number
-#' @param margin optional imputation margin argument
-#' @param q optional quantile argument for `MinDet`/`MinProb`
-#' @param sigma optional sigma argument for `MinProb`/`QRILC`
-#' @param k optional k argument for `nbavg`
-#' @param val optional replacement value argument for `with`
 #'
 #' @return code lines generated
 #' @rdname INTERNAL_codeGeneratorImpute
 #' @keywords internal
 #'
-codeGeneratorImpute <- function(method, step_number, margin = NULL, q = NULL, sigma = NULL, k = NULL, val = NULL) {
-    if (identical(method, "none")) {
-        return(
-            "####################################
-############ Imputation ############
-####################################
-## No imputation applied\n"
-        )
+codeGeneratorImpute <- function(method, step_number) {
+    specs <- imputation_method_specs()
+    if (!(method %in% names(specs))) {
+        stop("Unknown imputation method: ", method, call. = FALSE)
     }
 
+    default_args <- specs[[method]]$call_args
     arg_lines <- c(paste0("\t\tmethod = '", method, "'"))
-    if (!is.null(margin)) {
-        arg_lines <- c(arg_lines, paste0("\t\tMARGIN = ", as.integer(margin)))
-    }
-    if (!is.null(q)) {
-        arg_lines <- c(arg_lines, paste0("\t\tq = ", q))
-    }
-    if (!is.null(sigma)) {
-        arg_lines <- c(arg_lines, paste0("\t\tsigma = ", sigma))
-    }
-    if (!is.null(k)) {
-        arg_lines <- c(arg_lines, paste0("\t\tk = ", k))
-    }
-    if (!is.null(val)) {
-        arg_lines <- c(arg_lines, paste0("\t\tval = ", val))
+    for (arg_name in names(default_args)) {
+        arg_value <- default_args[[arg_name]]
+        if (is.character(arg_value)) {
+            arg_value <- paste0("'", arg_value, "'")
+        }
+        arg_lines <- c(arg_lines, paste0("\t\t", arg_name, " = ", arg_value))
     }
     args_block <- paste(arg_lines, collapse = ",\n")
 

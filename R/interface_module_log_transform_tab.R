@@ -5,7 +5,7 @@
 #' @rdname INTERNAL_interface_module_log_transform_tab
 #' @keywords internal
 #'
-#' @importFrom shiny fluidRow column NS actionButton icon uiOutput numericInput textOutput
+#' @importFrom shiny fluidRow column NS actionButton icon uiOutput numericInput textOutput selectInput
 #' @importFrom shinydashboardPlus box
 #' @importFrom htmltools tagList br div tags
 #' @importFrom shinyBS bsTooltip
@@ -19,12 +19,11 @@ interface_module_log_transform_tab <- function(id) {
                 width = 3,
                 solidHeader = TRUE,
                 collapsible = TRUE,
-                numericInput(
+                selectInput(
                     inputId = NS(id, "log_base"),
                     label = "Log base",
-                    value = 2,
-                    min = 0.1,
-                    step = 0.1
+                    choices = c("log2", "log10", "ln"),
+                    selected = "log2"
                 ),
                 numericInput(
                     inputId = NS(id, "pseudocount"),

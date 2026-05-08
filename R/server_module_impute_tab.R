@@ -9,16 +9,13 @@
 #' @rdname INTERNAL_server_module_impute_tab
 #' @keywords internal
 #'
-#' @importFrom shiny moduleServer reactive reactiveVal observe observeEvent req renderText eventReactive updateSelectInput renderUI numericInput selectInput NS
-#' @importFrom htmltools tagList
+#' @importFrom shiny moduleServer reactive reactiveVal observe observeEvent req renderText eventReactive updateSelectInput renderUI selectInput tags
+#' @importFrom htmltools tagList p
 #'
 server_module_impute_tab <- function(id, step_number, step_rv, parent_rv) {
     moduleServer(id, function(input, output, session) {
         pattern <- paste0("_(QFeaturesGUI#", step_number - 1, ")")
         method_specs <- imputation_method_specs()
-        methods_with_margin <- names(Filter(function(spec) {
-            !is.null(spec$default_margin)
-        }, method_specs))
 
         step_ready <- reactive({
             if (!is.null(parent_rv)) req(parent_rv() > 0L)
@@ -45,7 +42,7 @@ server_module_impute_tab <- function(id, step_number, step_rv, parent_rv) {
             choices <- method_choices()
             selected <- input$method
             if (is.null(selected) || !(selected %in% choices)) {
-                selected <- if ("bpca" %in% choices) "bpca" else choices[[1]]
+                selected <- if ("knn" %in% choices) "knn" else choices[[1]]
             }
 
             updateSelectInput(
@@ -61,80 +58,49 @@ server_module_impute_tab <- function(id, step_number, step_rv, parent_rv) {
             method_specs[[input$method]]
         })
 
-        output$method_params <- renderUI({
-            req(input$method)
-            default_margin <- current_method_spec()$default_margin
+        output$method_documentation <- renderUI({
+            choices <- method_choices()
+            selected_method <- input$method
 
-            params <- list()
-            if (input$method %in% methods_with_margin) {
-                params <- c(params, list(selectInput(
-                    inputId = NS(id, "margin"),
-                    label = "Imputation margin",
-                    choices = c("Features (rows)" = "1", "Samples (columns)" = "2"),
-                    selected = default_margin
-                )))
-            }
-            if (input$method %in% c("MinDet", "MinProb")) {
-                params <- c(params, list(numericInput(
-                    inputId = NS(id, "q"),
-                    label = "Quantile (q)",
-                    value = 0.01,
-                    min = 0,
-                    max = 1,
-                    step = 0.01
-                )))
-            }
-            if (input$method %in% c("MinProb", "QRILC")) {
-                params <- c(params, list(numericInput(
-                    inputId = NS(id, "sigma"),
-                    label = "Sigma",
-                    value = 1,
-                    min = 0,
-                    step = 0.1
-                )))
-            }
-            if (input$method == "nbavg") {
-                params <- c(params, list(numericInput(
-                    inputId = NS(id, "k"),
-                    label = "k (edge replacement value)",
-                    value = 0,
-                    step = 1
-                )))
-            }
-            if (input$method == "with") {
-                params <- c(params, list(numericInput(
-                    inputId = NS(id, "val"),
-                    label = "Replacement value",
-                    value = 0,
-                    step = 1
-                )))
-            }
-            do.call(tagList, params)
+            tagList(lapply(choices, function(method_name) {
+                spec <- method_specs[[method_name]]
+                is_selected <- identical(method_name, selected_method)
+                tags$div(
+                    class = "list-group-item",
+                    style = paste(
+                        "margin-bottom:8px;",
+                        if (is_selected) "border-color:#3c8dbc; background-color:#f5fbff;" else ""
+                    ),
+                    tags$div(
+                        style = "font-weight:600;",
+                        paste0(
+                            method_name,
+                            if (is_selected) " (selected)" else ""
+                        )
+                    ),
+                    p(
+                        style = "margin:4px 0;",
+                        spec$description
+                    ),
+                    if (!is.null(spec$default_parameters) &&
+                        length(spec$default_parameters) > 0L &&
+                        any(nzchar(spec$default_parameters))) {
+                        tags$div(
+                            style = "font-size:90%;",
+                            tags$strong("Default parameters: "),
+                            tags$code(paste(spec$default_parameters, collapse = ", "))
+                        )
+                    }
+                )
+            }))
         })
 
         impute_args <- reactive({
             req(input$method)
             req(input$method %in% method_choices())
-            args <- list()
-            if (input$method %in% methods_with_margin) {
-                req(input$margin)
-                args$MARGIN <- as.integer(input$margin)
-            }
-            if (input$method %in% c("MinDet", "MinProb")) {
-                req(is.finite(input$q), input$q >= 0, input$q <= 1)
-                args$q <- input$q
-            }
-            if (input$method %in% c("MinProb", "QRILC")) {
-                req(is.finite(input$sigma), input$sigma > 0)
-                args$sigma <- input$sigma
-            }
-            if (input$method == "nbavg") {
-                req(is.finite(input$k))
-                args$k <- input$k
-            }
-            if (input$method == "with") {
-                req(is.finite(input$val))
-                args$val <- input$val
+            args <- current_method_spec()$call_args
+            if (is.null(args)) {
+                return(list())
             }
             args
         })
@@ -161,22 +127,18 @@ server_module_impute_tab <- function(id, step_number, step_rv, parent_rv) {
             with_task_loader(
                 caption = "Applying imputation and generating post-imputation densities",
                 expr = {
-                    current_qfeatures <- if (identical(current_method, "none")) {
-                        current_assays
-                    } else {
-                        do.call(
-                            error_handler,
-                            c(
-                                list(
-                                    func = impute_qfeatures,
-                                    component_name = "Imputation",
-                                    object = current_assays,
-                                    impute_method = current_method
-                                ),
-                                current_args
-                            )
+                    current_qfeatures <- do.call(
+                        error_handler,
+                        c(
+                            list(
+                                func = impute_qfeatures,
+                                component_name = "Imputation",
+                                object = current_assays,
+                                impute_method = current_method
+                            ),
+                            current_args
                         )
-                    }
+                    )
 
                     if (is.null(current_qfeatures)) {
                         return(NULL)
@@ -240,7 +202,6 @@ server_module_impute_tab <- function(id, step_number, step_rv, parent_rv) {
             req(processed_state())
             applied_state <- processed_state()
             method <- applied_state$method
-            args <- applied_state$args
             with_task_loader(
                 caption = "Saving sets in QFeatures object",
                 expr = {
@@ -258,12 +219,7 @@ server_module_impute_tab <- function(id, step_number, step_rv, parent_rv) {
                     )
                     global_rv$code_lines[[paste0("imputation_", step_number)]] <- codeGeneratorImpute(
                         method = method,
-                        step_number = step_number,
-                        margin = if (!is.null(args$MARGIN)) args$MARGIN else NULL,
-                        q = if (!is.null(args$q)) args$q else NULL,
-                        sigma = if (!is.null(args$sigma)) args$sigma else NULL,
-                        k = if (!is.null(args$k)) args$k else NULL,
-                        val = if (!is.null(args$val)) args$val else NULL
+                        step_number = step_number
                     )
                     step_rv(step_rv() + 1L)
                 }

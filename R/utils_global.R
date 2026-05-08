@@ -948,18 +948,31 @@ normalisation_qfeatures <- function(qfeatures, method) {
 #' @keywords internal
 imputation_method_specs <- function() {
     list(
-        bpca = list(package = "pcaMethods", default_margin = "1"),
-        knn = list(package = "impute", default_margin = "1"),
-        QRILC = list(package = "imputeLCMD", default_margin = "2"),
-        MLE = list(package = "norm", default_margin = "2"),
-        MinDet = list(package = NULL, default_margin = "2"),
-        MinProb = list(package = "imputeLCMD", default_margin = "2"),
-        min = list(package = NULL),
-        zero = list(package = NULL),
-        nbavg = list(package = NULL, default_margin = "1"),
-        with = list(package = NULL),
-        RF = list(package = "missForest", default_margin = "2"),
-        none = list(package = NULL)
+        knn = list(
+            package = "impute",
+            description = "K-nearest neighbors imputation.",
+            default_parameters = c(
+                "MARGIN = 1",
+                "k = 10",
+                "rowmax = 0.5",
+                "colmax = 0.8",
+                "maxp = 1500",
+                "rng.seed = 362436069"
+            ),
+            call_args = list(MARGIN = 1L)
+        ),
+        MinDet = list(
+            package = NULL,
+            description = "Minimum deterministic imputation.",
+            default_parameters = c("q = 0.01", "MARGIN = 2"),
+            call_args = list(q = 0.01, MARGIN = 2L)
+        ),
+        zero = list(
+            package = NULL,
+            description = "Replace missing values with zero.",
+            default_parameters = character(0),
+            call_args = list()
+        )
     )
 }
 
