@@ -22,6 +22,7 @@ Imports:
     SummarizedExperiment,
     utils,
     htmltools,
+    impute,
     pcaMethods,
     plotly,
     MultiAssayExperiment,
