@@ -37,19 +37,10 @@ server_module_aggregation_tab <- function(id, step_number, step_rv, parent_rv) {
             )
         })
 
-        unique_features <- reactive({
+        feature_choices <- reactive({
             req(parent_assays())
             req(input$fcol)
-            unique(rbindRowData(parent_assays(), seq_along(parent_assays))[[input$fcol]])
-        })
-
-        observe({
-            req(unique_features())
-            updateSelectizeInput(
-                inputId = "features",
-                choices = unique_features(),
-                server = TRUE
-            )
+            as.character(unique(rbindRowData(parent_assays(), seq_along(parent_assays))[[input$fcol]]))
         })
 
         observe({
@@ -62,6 +53,23 @@ server_module_aggregation_tab <- function(id, step_number, step_rv, parent_rv) {
         clicked <- reactiveVal(FALSE)
         observeEvent(input$aggregate, {
             clicked(TRUE)
+
+            choices <- feature_choices()
+            selected_feature <- input$features
+            if (length(choices) == 0L) {
+                selected_feature <- character(0)
+            } else if (is.null(selected_feature) ||
+                length(selected_feature) == 0L ||
+                !(selected_feature %in% choices)) {
+                selected_feature <- choices[[1]]
+            }
+            updateSelectizeInput(
+                session = session,
+                inputId = "features",
+                choices = choices,
+                selected = selected_feature,
+                server = TRUE
+            )
         })
 
         output$aggregation_boxplot_ui <- renderUI({
@@ -80,38 +88,41 @@ server_module_aggregation_tab <- function(id, step_number, step_rv, parent_rv) {
         })
 
 
-        processed_assays <- eventReactive(input$aggregate, {
-            req(parent_assays())
+        aggregation_parameters <- eventReactive(input$aggregate, {
+            req(input$method)
             req(input$fcol)
-            error_handler(
-                aggregation_qfeatures,
-                component_name = "aggregation",
-                qfeatures = parent_assays(),
+            list(
                 method = as.character(input$method),
                 fcol = input$fcol
             )
         })
 
-        # TO DO
-        # extract server module from observer
-        observe({
-            req(processed_assays())
-            req(input$color)
-            req(input$features)
-            server_module_boxplot_box(
-                id = "aggregation_boxplot",
-                qf = parent_assays(),
-                qf_aggregate = processed_assays(),
-                aggregateBy = input$fcol,
-                feature = input$features,
-                color = input$color,
-                showPoints = reactive(input$addPoints)
+        processed_assays <- eventReactive(input$aggregate, {
+            req(parent_assays())
+            params <- aggregation_parameters()
+            error_handler(
+                aggregation_qfeatures,
+                component_name = "aggregation",
+                qfeatures = parent_assays(),
+                method = params$method,
+                fcol = params$fcol
             )
         })
+
+        server_module_boxplot_box(
+            id = "aggregation_boxplot",
+            qf = parent_assays,
+            qf_aggregate = processed_assays,
+            aggregateBy = reactive(aggregation_parameters()$fcol),
+            feature = reactive(input$features),
+            color = reactive(input$color),
+            showPoints = reactive(input$addPoints)
+        )
 
 
         observeEvent(input$export, {
             req(processed_assays())
+            params <- aggregation_parameters()
             with_task_loader(
                 caption = "Saving sets in QFeatures object",
                 expr = {
@@ -121,11 +132,11 @@ server_module_aggregation_tab <- function(id, step_number, step_rv, parent_rv) {
                         processed_qfeatures = processed_assays(),
                         step_number = step_number,
                         type = "aggregation",
-                        varTo = input$fcol,
-                        varFrom = input$fcol
+                        varTo = params$fcol,
+                        varFrom = params$fcol
                     )
                     global_rv$code_lines[[paste0("Initialization_names_", step_number)]] <- codeGeneratorInitialization(qf = .qf$qfeatures, step_number = step_number)
-                    global_rv$code_lines[[paste0("aggregation_", step_number)]] <- codeGeneratorAggregation(method = as.character(input$method), fcol = input$fcol, step_number = step_number)
+                    global_rv$code_lines[[paste0("aggregation_", step_number)]] <- codeGeneratorAggregation(method = params$method, fcol = params$fcol, step_number = step_number)
                     step_rv(step_rv() + 1L)
                 }
             )
@@ -156,50 +167,66 @@ server_module_aggregation_tab <- function(id, step_number, step_rv, parent_rv) {
 
 server_module_boxplot_box <- function(id, qf, qf_aggregate, aggregateBy, feature, color, showPoints) {
     moduleServer(id, function(input, output, session) {
-        df_qf_list <- list()
-        df_qf_aggregate_list <- list()
-        for (i in names(qf)) {
-            set_qf <- qf[[i]][rowData(qf[[i]])[[aggregateBy]] == feature, ]
-            set_qf_aggregate <- qf_aggregate[[i]][rowData(qf_aggregate[[i]])[[aggregateBy]] == feature, ]
-            if (color == "NULL") {
-                df_qf_list[[i]] <- assay(set_qf) |>
-                    as.data.frame() |>
-                    rownames_to_column(var = "aggregation") |>
-                    tidyr::gather(sample, intensity, -aggregation) |>
-                    na.exclude()
-                df_qf_aggregate_list[[i]] <- assay(set_qf_aggregate) |>
-                    as.data.frame() |>
-                    rownames_to_column(var = "aggregation") |>
-                    tidyr::gather(sample, intensity, -aggregation) |>
-                    na.exclude()
-            } else {
-                df_qf_list[[i]] <- assay(set_qf) |>
-                    as.data.frame() |>
-                    rownames_to_column(var = "aggregation") |>
-                    tidyr::gather(sample, intensity, -aggregation) |>
-                    mutate(condition = as.vector(colData(qf)[sample, color])) |>
-                    na.exclude()
-                df_qf_aggregate_list[[i]] <- assay(set_qf_aggregate) |>
-                    as.data.frame() |>
-                    rownames_to_column(var = "aggregation") |>
-                    tidyr::gather(sample, intensity, -aggregation) |>
-                    mutate(condition = as.vector(colData(qf_aggregate)[sample, color])) |>
-                    na.exclude()
+        plot_data <- reactive({
+            req(qf())
+            req(qf_aggregate())
+            req(aggregateBy())
+            req(feature())
+            req(color())
+
+            qf_current <- qf()
+            qf_aggregate_current <- qf_aggregate()
+            aggregate_by <- aggregateBy()
+            selected_feature <- feature()
+            selected_color <- color()
+
+            df_qf_list <- list()
+            df_qf_aggregate_list <- list()
+            for (i in names(qf_current)) {
+                set_qf <- qf_current[[i]][rowData(qf_current[[i]])[[aggregate_by]] == selected_feature, ]
+                set_qf_aggregate <- qf_aggregate_current[[i]][rowData(qf_aggregate_current[[i]])[[aggregate_by]] == selected_feature, ]
+                if (selected_color == "NULL") {
+                    df_qf_list[[i]] <- assay(set_qf) |>
+                        as.data.frame() |>
+                        rownames_to_column(var = "aggregation") |>
+                        tidyr::gather(sample, intensity, -aggregation) |>
+                        na.exclude()
+                    df_qf_aggregate_list[[i]] <- assay(set_qf_aggregate) |>
+                        as.data.frame() |>
+                        rownames_to_column(var = "aggregation") |>
+                        tidyr::gather(sample, intensity, -aggregation) |>
+                        na.exclude()
+                } else {
+                    df_qf_list[[i]] <- assay(set_qf) |>
+                        as.data.frame() |>
+                        rownames_to_column(var = "aggregation") |>
+                        tidyr::gather(sample, intensity, -aggregation) |>
+                        mutate(condition = as.vector(colData(qf_current)[sample, selected_color])) |>
+                        na.exclude()
+                    df_qf_aggregate_list[[i]] <- assay(set_qf_aggregate) |>
+                        as.data.frame() |>
+                        rownames_to_column(var = "aggregation") |>
+                        tidyr::gather(sample, intensity, -aggregation) |>
+                        mutate(condition = as.vector(colData(qf_aggregate_current)[sample, selected_color])) |>
+                        na.exclude()
+                }
             }
-        }
 
-        df_qf <- dplyr::bind_rows(df_qf_list)
-        df_qf_aggregate <- dplyr::bind_rows(df_qf_aggregate_list)
-        data_final <- dplyr::bind_rows(df_qf, df_qf_aggregate)
+            df_qf <- dplyr::bind_rows(df_qf_list)
+            df_qf_aggregate <- dplyr::bind_rows(df_qf_aggregate_list)
+            data_final <- dplyr::bind_rows(df_qf, df_qf_aggregate)
 
-        data_final$aggregation <- factor(data_final$aggregation, levels = unique(data_final$aggregation))
+            data_final$aggregation <- factor(data_final$aggregation, levels = unique(data_final$aggregation))
+            data_final
+        })
 
         output$boxplot <- renderPlotly({
+            req(plot_data())
             error_handler(
                 create_boxplot,
                 component_name = "boxplot generation",
-                data = data_final,
-                color = color,
+                data = plot_data(),
+                color = color(),
                 showPoints = showPoints()
             )
         })

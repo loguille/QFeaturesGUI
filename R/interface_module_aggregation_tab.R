@@ -37,13 +37,19 @@ interface_module_aggregation_tab <- function(id) {
                     choices = NULL
                 ),
                 br(),
-                selectizeInput(
-                    inputId = NS(id, "features"),
-                    "Features to plot",
-                    choices = NULL
+                actionButton(
+                    inputId = NS(id, "aggregate"),
+                    label = "Aggregate",
+                    width = "100%",
+                    class = "load-button"
                 ),
                 br(),
                 tags$h4("Plot options"),
+                selectizeInput(
+                    inputId = NS(id, "features"),
+                    "Feature to plot",
+                    choices = NULL
+                ),
                 selectInput(
                     inputId = NS(id, "color"),
                     label = "Color by",
@@ -53,12 +59,6 @@ interface_module_aggregation_tab <- function(id) {
                     inputId = NS(id, "addPoints"),
                     label = "Show points",
                     value = TRUE
-                ),
-                actionButton(
-                    inputId = NS(id, "aggregate"),
-                    label = "Aggregate",
-                    width = "100%",
-                    class = "load-button"
                 )
             ),
             box(
