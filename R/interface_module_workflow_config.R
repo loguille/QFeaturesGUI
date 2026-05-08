@@ -48,6 +48,9 @@ interface_module_workflow_config_tab <- function(id, initial_steps) {
                         tags$li("Filtering NAs by Features"),
                         tags$li("Filtering NAs by Samples"),
                         tags$li("Normalisation"),
+                        tags$li("Zero to NA"),
+                        tags$li("Log Transform"),
+                        tags$li("Imputation"),
                         tags$li("Aggregation"),
                         tags$li("Join"),
                         tags$li("Aggregation")
@@ -90,6 +93,30 @@ interface_module_workflow_config_tab <- function(id, initial_steps) {
                     tags$p(
                         "Use the pre/post density plots to compare distribution",
                         "changes and select the most appropriate method."
+                    ),
+                    doc_section_header(
+                        "Zero to NA",
+                        "https://uclouvain-cbio.github.io/QFeaturesGUI/articles/processQFeatures.html#zeroisna"
+                    ),
+                    tags$p(
+                        "Replace all zero intensity values with NA across the",
+                        "selected sets."
+                    ),
+                    doc_section_header(
+                        "Log Transform",
+                        "https://uclouvain-cbio.github.io/QFeaturesGUI/articles/processQFeatures.html#logtransform"
+                    ),
+                    tags$p(
+                        "Apply a logarithmic transformation with configurable",
+                        "base and pseudocount."
+                    ),
+                    doc_section_header(
+                        "Imputation",
+                        "https://uclouvain-cbio.github.io/QFeaturesGUI/articles/processQFeatures.html#imputation"
+                    ),
+                    tags$p(
+                        "Impute missing values with one of the available methods",
+                        "and inspect pre/post distributions before saving."
                     ),
                     doc_section_header(
                         "Filtering Missing Values by Samples",
@@ -153,6 +180,9 @@ interface_module_workflow_config_tab <- function(id, initial_steps) {
                                                 "Sample Filtering",
                                                 "Feature Filtering",
                                                 "Normalisation",
+                                                "Zero to NA",
+                                                "Log Transform",
+                                                "Imputation",
                                                 "Filtering NAs by Features",
                                                 "Filtering NAs by Samples",
                                                 "Aggregation",
