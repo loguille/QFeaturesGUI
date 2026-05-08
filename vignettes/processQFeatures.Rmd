@@ -99,6 +99,36 @@ Missing values can be very numerous in certain proteomics experiments and need t
 
 In this step you will have to define a threshold value for the percent of NA above what a feature/sample should be discard (`A`). By changing this value, the statistics of the number and percent of features/samples removed (`B`) and the associated plot (`C`) will automatically be updated. Once the threshold has been set type on `Save the processed sets` (`D`).
 
+# Zero to NA
+
+This step convert all zero intensities into missing values (NA) in the selected sets
+
+# Log Transformation
+
+When analysing continuous data using parametric methods (such as t-test or linear models), it is often necessary to log-transform the data. 
+
+The Log base is by default set to 2 and a pseudocount value can be added to handle zero values in data before applying logarithm.
+
+# Imputation
+
+There are two types of mechanisms resulting in missing values in LC/MSMS experiments.
+
+- Missing values resulting from absence of detection of a feature, despite ions being present at detectable concentrations. For example in the case of ion suppression or as a results from the stochastic, data-dependant nature of the MS acquisition method. These missing value are expected to be randomly distributed in the data and are defined as *missing at random* (MAR) or *missing completely at random* (MCAR)
+
+- Biologically relevant missing values, resulting from the absence of the low abundance of ions (below the limit of detection of the instrument). These missing values are not expected to be randomly distributed in the data and are defined as *missing not at random* (MNAR).
+
+See [Imputing quantitative proteomics data](https://rformassspectrometry.github.io/QFeatures/articles/Imputation.html) for more informations. 
+
+First choose an imputation method :
+
+- `knn` : Nearest neighbour averaging, as implemented in the [`impute::impute.knn`](https://www.bioconductor.org/packages/release/bioc/html/impute.html) function. Note that this function is used with default parameters. 
+
+- `MinDet` : Performs the imputation of left-censored missing data using a deterministic minimal value approach. Considering an expression data with `n` samples and `p` features, for each sample, the missing entries are replaced with a minimal value observed in that sample. The minimal value observed is estimated as being the q-th quantile (default q = 0.01) of the observed values in that sample. Implemented in the [`imputeLCMD::impute.MinDet`](https://rdrr.io/cran/imputeLCMD/man/impute.MinDet.html). Note that this function is used with default parameters.
+
+- `zero` : Replaces the missing values with 0.
+
+Then click on `Apply imputation`, once the imputation has run the page will display a Post-imputation density plot which you can color by colData. 
+
 # Normalisation
 
 ```{r, echo = FALSE, out.width="100%", fig.cap= "post-Filtering metrics section"}
