@@ -609,9 +609,12 @@ check_prefilled_steps <- function(prefilledSteps) {
     valid_steps <- c(
         sampleFiltering = "Sample Filtering",
         normalisation = "Normalisation",
-        featureFiltering = "Feature Filtering",
-        missingValuesFeatures = "Filtering NAs by Features",
-        missingValuesSamples = "Filtering NAs by Samples",
+        zero_to_na = "Zero to NA",
+        log_transform = "Log Transform",
+        imputation = "Imputation",
+        feature_filtering = "Feature Filtering",
+        missing_values_features = "Filtering NAs by Features",
+        missing_values_samples = "Filtering NAs by Samples",
         aggregation = "Aggregation",
         join = "Join"
     )
@@ -943,6 +946,110 @@ normalisation_qfeatures <- function(qfeatures, method) {
     QFeatures(el, colData = colData(qfeatures))
 }
 
+#' A function that lists the imputation methods supported by the GUI
+#'
+#' @return A named list describing supported imputation methods.
+#' @rdname INTERNAL_imputation_method_specs
+#' @keywords internal
+imputation_method_specs <- function() {
+    list(
+        knn = list(
+            package = "impute",
+            description = "K-nearest neighbors imputation.",
+            default_parameters = c(
+                "MARGIN = 1",
+                "k = 10",
+                "rowmax = 0.5",
+                "colmax = 0.8",
+                "maxp = 1500",
+                "rng.seed = 362436069"
+            ),
+            call_args = list(MARGIN = 1L)
+        ),
+        MinDet = list(
+            package = NULL,
+            description = "Minimum deterministic imputation.",
+            default_parameters = c("q = 0.01", "MARGIN = 2"),
+            call_args = list(q = 0.01, MARGIN = 2L)
+        ),
+        zero = list(
+            package = NULL,
+            description = "Replace missing values with zero.",
+            default_parameters = character(0),
+            call_args = list()
+        )
+    )
+}
+
+
+#' A function that returns imputation methods available in the current session
+#'
+#' @return `character()` vector of method names accepted by the GUI.
+#' @rdname INTERNAL_available_imputation_methods
+#' @keywords internal
+available_imputation_methods <- function() {
+    specs <- imputation_method_specs()
+    names(specs)[vapply(specs, function(spec) {
+        is.null(spec$package) || requireNamespace(spec$package, quietly = TRUE)
+    }, logical(1))]
+}
+
+
+#' A function that validates an imputation method before it is used
+#'
+#' @param method `character(1)` imputation method used by `QFeatures::impute`
+#' @return The method specification entry invisibly.
+#' @rdname INTERNAL_assert_imputation_method_available
+#' @keywords internal
+assert_imputation_method_available <- function(method) {
+    specs <- imputation_method_specs()
+    if (!(method %in% names(specs))) {
+        stop("Unknown imputation method: ", method, call. = FALSE)
+    }
+
+    required_package <- specs[[method]]$package
+    if (!is.null(required_package) && !requireNamespace(required_package, quietly = TRUE)) {
+        stop(
+            "Imputation method '", method, "' requires the optional package '",
+            required_package, "'. Install it to use this method.",
+            call. = FALSE
+        )
+    }
+
+    invisible(specs[[method]])
+}
+
+
+#' A function that will impute all assays of a qfeatures object
+#'
+#' @param object `QFeatures` object to impute
+#' @param impute_method `character(1)` imputation method used by `QFeatures::impute`
+#' @param ... additional parameters forwarded to `QFeatures::impute`
+#' @return `QFeatures` object with imputed assays
+#' @rdname INTERNAL_impute_qfeatures
+#' @keywords internal
+impute_qfeatures <- function(object, impute_method, ...) {
+    if (identical(impute_method, "none")) {
+        return(object)
+    }
+
+    assert_imputation_method_available(impute_method)
+
+    source_names <- names(object)
+    imputed_names <- paste0(source_names, "__imputed_tmp")
+    imputed_qf <- QFeatures::impute(
+        object = object,
+        i = seq_along(object),
+        name = imputed_names,
+        method = impute_method,
+        ...
+    )
+
+    out <- suppressMessages(suppressWarnings(imputed_qf[, , imputed_names]))
+    names(out) <- source_names
+    out
+}
+
 
 #' A function that returns ridge density plots of intensities by sample group
 #'
@@ -1006,10 +1113,26 @@ density_by_sample_plotly <- function(qfeatures, color = NULL, title = "Density b
         return(plot_ly() %>% layout(title = title))
     }
 
+    group_levels <- sort(unique(combined_df$group))
+    if (length(group_levels) <= 1L) {
+        ridge_colors <- setNames("steelblue", group_levels)
+    } else {
+        base_palette <- suppressWarnings(
+            RColorBrewer::brewer.pal(min(8L, length(group_levels)), "Set2")
+        )
+        if (length(group_levels) > length(base_palette)) {
+            base_palette <- grDevices::colorRampPalette(base_palette)(length(group_levels))
+        } else {
+            base_palette <- base_palette[seq_along(group_levels)]
+        }
+        ridge_colors <- setNames(base_palette, group_levels)
+    }
+
     p <- plotlyridges(
         data = combined_df,
         vardens = "intensity",
-        varcat = "group"
+        varcat = "group",
+        category_colors = ridge_colors
     )
     p %>% layout(title = title)
 }
@@ -1017,36 +1140,24 @@ density_by_sample_plotly <- function(qfeatures, color = NULL, title = "Density b
 # This function comes from the github repo rushkin/bitsandends
 # Thanks to iliarushkin for this function
 
-#' Mimicks \code{ggridges} but using \code{plotly} so that the output is interactive
+#' Build a simple interactive ridge density plot
 #'
-#' @param data data-frame of data to plot
-#' @param vardens name of the column in \code{data} to use on the x-axis ('density variable')
-#' @param varcat name of the column in \code{data} to use for splitting plots ('category variable')
-#' @param linecolor line color
-#' @param fillcolor fill color
-#' @param fillopacity fill opacity
-#' @param linewidth line width
-#' @param scale vertical scale of plots, compared to the spacing between plots.
-#' @param logspaced boolean, whether to use log-spaced points in calculating density
-#' @param cut.from how much to cut into the region to the left of the smallest data values, in units of the bandwidth.
-#' @param cut.to how much to cut into the region to the right of the greatest data values, in units of the bandwidth.
-#' @param n number of points used in calculation of density
-#' @param bw bandwidth to use in density calculation. if NULL, uses the default of \code{density}.
-#' @param bw.separate if TRUE, will use separately estimated bandwidth in each plot, overriding \code{bw}
-#' @param height.norm vertical normalization of plots. If 'integral', will normalize to unit area under the curve. If '1' will normalize to unit maximum height
-#' @param round.digits number of rounding digits used in hover labels
-#' @param x.min lower end of the x-axis range
-#' @param height passed as \code{height} to the plotly object
-#' @param width passed as \code{width} to the plotly object
+#' @param data `data.frame` to plot.
+#' @param vardens `character(1)` column name in `data` used as the density variable.
+#' @param varcat `character(1)` column name in `data` used as the category variable.
+#' @param category_colors optional named `character` vector mapping each
+#'   category in `varcat` to a color. If `NULL`, a default color is used.
+#' @param fillopacity `numeric(1)` alpha used for ridge fill color.
+#' @param linewidth `numeric(1)` ridge line width.
+#' @param height optional `numeric(1)` plot height passed to `plotly`.
+#' @param width optional `numeric(1)` plot width passed to `plotly`.
 #' @return a plotly object
 #'
 #' @rdname INTERNAL_plotlyridges
 #' @keywords internal
 #' @importFrom plotly plot_ly add_trace add_annotations layout
 #'
-plotlyridges <- function(data, vardens, varcat, linecolor = "darkblue", fillcolor = "steelblue", fillopacity = 0.6, linewidth = 0.5, scale = 0.9, logspaced = FALSE, cut.from = 0, cut.to = 3, n = 512, bw = NULL, bw.separate = FALSE, height.norm = "integral", round.digits = 2, x.min = 0,
-    height = NULL,
-    width = NULL) {
+plotlyridges <- function(data, vardens, varcat, category_colors = NULL, fillopacity = 0.6, linewidth = 0.5, height = NULL, width = NULL) {
     empty_plot <- function() {
         p <- plotly::plot_ly(type = "scatter", mode = "lines", height = height, width = width)
         p <- plotly::add_annotations(
@@ -1066,160 +1177,141 @@ plotlyridges <- function(data, vardens, varcat, linecolor = "darkblue", fillcolo
         )
     }
 
-    var_values <- data[, vardens]
-    cat_values <- as.character(data[, varcat])
-    cat_values[is.na(cat_values) | !nzchar(cat_values)] <- "NA"
-    keep <- is.finite(var_values)
-    data <- data[keep, , drop = FALSE]
-    data[, varcat] <- cat_values[keep]
-    if (nrow(data) == 0L) {
+    as_rgba <- function(col, alpha) {
+        col_rgb <- as.vector(grDevices::col2rgb(col)) / 255
+        grDevices::rgb(col_rgb[1], col_rgb[2], col_rgb[3], alpha = alpha)
+    }
+
+    density_hover_text <- function(values) {
+        values <- values[is.finite(values)]
+        if (length(values) == 0L) {
+            return("")
+        }
+        q <- stats::quantile(values)
+        paste0(
+            "Observations: ", prettyNum(length(values), big.mark = ","),
+            "<br>Median: ", round(q[3], 2),
+            "<br>Range: [", round(q[1], 2), ", ", round(q[5], 2), "]",
+            "<br>Interquartile Range: [", round(q[2], 2), ", ", round(q[4], 2), "]"
+        )
+    }
+
+    build_density_curve <- function(values) {
+        values <- values[is.finite(values)]
+        if (length(values) == 0L) {
+            return(NULL)
+        }
+
+        density_values <- if (length(values) >= 2L) {
+            tryCatch(stats::density(values, bw = "nrd0", n = 512), error = function(e) NULL)
+        } else {
+            # Fallback for one-point groups.
+            from <- values[1] - 0.5
+            to <- values[1] + 0.5
+            x <- seq(from, to, length.out = 512)
+            y <- stats::dnorm(x, mean = values[1], sd = 0.1)
+            list(x = x, y = y)
+        }
+
+        if (is.null(density_values)) {
+            return(NULL)
+        }
+        density_values[c("x", "y")]
+    }
+
+    stopifnot(is.data.frame(data))
+    stopifnot(vardens %in% colnames(data), varcat %in% colnames(data))
+
+    values <- data[, vardens]
+    groups <- as.character(data[, varcat])
+    groups[is.na(groups) | !nzchar(groups)] <- "NA"
+    keep <- is.finite(values)
+    values <- values[keep]
+    groups <- groups[keep]
+    if (length(values) == 0L) {
         return(empty_plot())
     }
 
-    r <- range(data[, vardens], finite = TRUE)
+    r <- range(values, finite = TRUE)
     if (!all(is.finite(r))) {
         return(empty_plot())
     }
 
-    if (is.null(bw) && !bw.separate) {
-        x_all <- if (logspaced) log(data[, vardens]) else data[, vardens]
-        x_all <- x_all[is.finite(x_all)]
-        if (length(x_all) > 1L) {
-            bw <- density(x_all)$bw
-        } else {
-            bw <- 1
-        }
-    }
-
-    split_index <- split(seq_len(nrow(data)), data[, varcat], drop = TRUE)
-    catnames <- names(split_index)
-    x <- vector("list", length(split_index))
-    y <- vector("list", length(split_index))
-    kept_catnames <- character(0)
-    for (catname in catnames) {
-        idx <- split_index[[catname]]
-        x_group <- data[idx, vardens]
-        x_group <- x_group[is.finite(x_group)]
-        if (length(x_group) == 0L) {
-            next
-        }
-        if (bw.separate) {
-            bw_current <- if (length(x_group) == 1L) 1 else "nrd0"
-        } else {
-            bw_current <- bw
-        }
-        if (logspaced) {
-            x_group <- log(x_group)
-            x_group <- x_group[is.finite(x_group)]
-            if (length(x_group) == 0L) {
-                next
-            }
-        }
-        from <- min(x_group, na.rm = TRUE) - cut.from * if (is.numeric(bw_current)) bw_current else 1
-        to <- max(x_group, na.rm = TRUE) + cut.to * if (is.numeric(bw_current)) bw_current else 1
-        if (!is.finite(from) || !is.finite(to)) {
-            next
-        }
-        if (from == to) {
-            from <- from - 0.5
-            to <- to + 0.5
-        }
-        d <- tryCatch(
-            density(x_group, bw = bw_current, n = n, from = from, to = to)[1:2],
-            error = function(e) NULL
-        )
-        if (is.null(d)) {
-            next
-        }
-        if (height.norm == "1") {
-            d$y <- d$y / max(d$y)
-        }
-        if (height.norm == "integral") {
-            d$y <- d$y / (sum(d$y) * (d$x[2] - d$x[1]))
-        }
-        if (logspaced) {
-            d$x <- exp(d$x)
-            d$y <- d$y / d$x
-        }
-        x[[length(kept_catnames) + 1L]] <- d$x
-        y[[length(kept_catnames) + 1L]] <- d$y
-        kept_catnames <- c(kept_catnames, catname)
-    }
-    catnames <- kept_catnames
-    if (length(catnames) == 0L) {
+    split_values <- split(values, groups, drop = TRUE)
+    split_values <- split_values[vapply(split_values, function(x) any(is.finite(x)), logical(1))]
+    group_names <- names(split_values)
+    if (length(group_names) == 0L) {
         return(empty_plot())
     }
-    x <- x[seq_along(catnames)]
-    y <- y[seq_along(catnames)]
 
-    text_df <- aggregate(data[, vardens], by = list(varcat = data[, varcat]), FUN = function(x) {
-        x <- x[is.finite(x)]
-        if (length(x) == 0L) {
-            return(NA_character_)
+    curves <- lapply(split_values, build_density_curve)
+    keep_curves <- vapply(curves, Negate(is.null), logical(1))
+    curves <- curves[keep_curves]
+    split_values <- split_values[keep_curves]
+    group_names <- names(curves)
+    if (length(group_names) == 0L) {
+        return(empty_plot())
+    }
+
+    linecolors <- rep("steelblue4", length(group_names))
+    fillcolors <- rep(as_rgba("steelblue", fillopacity), length(group_names))
+    if (!is.null(category_colors)) {
+        category_colors <- as.character(category_colors)
+        if (!is.null(names(category_colors))) {
+            mapped_colors <- unname(category_colors[group_names])
+        } else {
+            mapped_colors <- rep(category_colors, length.out = length(group_names))
         }
-        q <- quantile(x)
-        paste0(
-            "Observations: ", prettyNum(length(x), big.mark = ","),
-            "<br>Median: ", round(q[3], round.digits),
-            "<br>Range: [", round(q[1], round.digits), ", ", round(q[5], round.digits), "]",
-            "<br>Interquartile Range: [", round(q[2], round.digits), ", ", round(q[4], round.digits), "]"
-        )
-    })
-    text_map <- setNames(text_df$x, as.character(text_df$varcat))
-    text <- as.character(text_map[catnames])
-    text[is.na(text)] <- ""
+        mapped_colors[is.na(mapped_colors) | !nzchar(mapped_colors)] <- "steelblue4"
+        linecolors <- mapped_colors
+        fillcolors <- vapply(linecolors, as_rgba, alpha = fillopacity, character(1))
+    }
 
-    ymax <- max(unlist(y), na.rm = TRUE)
+    hover_text <- vapply(split_values, density_hover_text, character(1))
+
+    ymax <- max(unlist(lapply(curves, `[[`, "y")), na.rm = TRUE)
     if (!is.finite(ymax) || ymax <= 0) {
         ymax <- 1
     }
-    y <- lapply(y, function(yy) {
-        yy <- scale * yy / ymax
-        yy[!is.finite(yy)] <- 0
-        yy
+    curves <- lapply(curves, function(curve) {
+        curve$y <- 0.9 * curve$y / ymax
+        curve$y[!is.finite(curve$y)] <- 0
+        curve
     })
+
     p <- plotly::plot_ly(type = "scatter", mode = "lines", height = height, width = width)
 
-    fillcolor <- as.vector(col2rgb(fillcolor)) / 255
-    fillcolor <- rgb(fillcolor[1], fillcolor[2], fillcolor[3], alpha = fillopacity)
-
-    if (is.null(x.min)) {
-        xaxis <- list(range = r)
-    } else {
-        xaxis <- list(range = c(x.min, r[2]))
-    }
-
-    for (i in rev(seq_along(catnames))) {
+    for (i in rev(seq_along(group_names))) {
         p <- plotly::add_trace(
             p,
-            x = x[[i]],
+            x = curves[[i]]$x,
             y = i,
-            line = list(color = linecolor, width = linewidth),
+            line = list(color = linecolors[i], width = linewidth),
             showlegend = FALSE,
             hoverinfo = "none"
         )
         p <- plotly::add_trace(
             p,
-            x = x[[i]],
-            y = y[[i]] + i,
+            x = curves[[i]]$x,
+            y = curves[[i]]$y + i,
             fill = "tonexty",
-            fillcolor = fillcolor,
-            line = list(color = linecolor, width = linewidth),
+            fillcolor = fillcolors[i],
+            line = list(color = linecolors[i], width = linewidth),
             showlegend = FALSE,
-            name = catnames[i],
+            name = group_names[i],
             hoverinfo = "text",
-            text = text[i]
+            text = hover_text[i]
         )
     }
     plotly::layout(
         p,
         yaxis = list(
             tickmode = "array",
-            tickvals = seq_along(catnames),
-            ticktext = catnames,
+            tickvals = seq_along(group_names),
+            ticktext = group_names,
             showline = TRUE
         ),
-        xaxis = xaxis
+        xaxis = list(range = r)
     )
 }
 
@@ -1580,4 +1672,99 @@ add_joined_assay_to_global_rv <- function(processed_qfeatures, step_number, feat
     closeOnClickOutside = TRUE
   )
   
+}
+
+#' Create tooltip
+#'
+#' @description
+#' A wrapper that creates a Bootstrap 3 compatible tooltip.
+#'
+#' @param trigger A tag or character(1) to which
+#'   the tooltip is attached. Can be any Shiny UI element such as a
+#'   actionButton, tags$span, or
+#'   plain text. When character(1) is provided, an info icon is
+#'   appended to the text.
+#' @param tooltipText character(1) The text to display inside the
+#'   tooltip popup.
+#' @param placement character(1) The placement of the tooltip relative
+#'   to the trigger element. One of "right" (default), "left",
+#'   "top", or "bottom".
+#' @param icon character(1) The FontAwesome icon class to use as the
+#'   tooltip indicator when trigger is a character(1).
+#'   Defaults to "fa-info-circle". Ignored if trigger is a tag.
+#'
+#' @return A tagList containing the trigger element with
+#'   the tooltip attached.
+#'
+#' @importFrom shiny tags tagAppendAttributes
+#'
+#' @examples
+#' ## Plain text trigger with info icon
+#' bs3Tooltip(
+#'     trigger = "assayData",
+#'     tooltipText = paste0(
+#'         "A data.frame or any object that can be coerced into a data.frame, ",
+#'         "holding the quantitative assay."
+#'     )
+#' )
+#'
+#' ## Button trigger
+#' bs3Tooltip(
+#'     trigger = shiny::actionButton("btn", "Import"),
+#'     tooltipText = "Click to import the data",
+#'     placement = "top"
+#' )
+#'
+#' @rdname INTERNAL_bs3Tooltip
+#' @keywords internal
+#' 
+bs3Tooltip <- function(trigger,
+                       tooltipText,
+                       placement = c("right", "left", "top", "bottom"),
+                       icon = "fa-info-circle") {
+  stopifnot(
+    is.character(tooltipText), length(tooltipText) == 1L,
+    is.character(icon), length(icon) == 1L
+  )
+  placement <- match.arg(placement)
+  
+  if (is.character(trigger)) {
+    stopifnot(length(trigger) == 1L)
+    trigger <- tags$span(
+      trigger,
+      tags$i(
+        class = paste("fa", icon),
+        style = "cursor: pointer; margin-left: 5px;"
+      )
+    )
+  } else if (!inherits(trigger, "shiny.tag")) {
+    stop("'trigger' must be a character(1) or a Shiny tag object.")
+  }
+  
+  existing_style <- trigger$attribs$style
+  merged_style <- if (is.null(existing_style) || !nzchar(existing_style)) {
+    "cursor: pointer;"
+  } else {
+    paste0(sub(";?\\s*$", "", existing_style), "; cursor: pointer;")
+  }
+  
+  htmltools::tagList(
+    htmltools::singleton(
+      shiny::tags$script(shiny::HTML(
+        "$(function() {
+             $('body').tooltip({
+               selector: '[data-toggle=\"tooltip\"]',
+               container: 'body'
+             });
+           });"
+      ))
+    ),
+    tagAppendAttributes(
+      trigger,
+      title = tooltipText,
+      `data-toggle` = "tooltip",
+      `data-placement` = placement,
+      style = merged_style
+    )
+  )
 }
