@@ -607,14 +607,14 @@ check_qfeatures <- function(qfeatures) {
 #' @noRd
 check_prefilled_steps <- function(prefilledSteps) {
     valid_steps <- c(
-        sample_filtering = "Sample Filtering",
+        sampleFiltering = "Sample Filtering",
         normalisation = "Normalisation",
-        zero_to_na = "Zero to NA",
-        log_transform = "Log Transform",
+        zeroToNA = "Zero to NA",
+        logTransform = "Log Transform",
         imputation = "Imputation",
-        feature_filtering = "Feature Filtering",
-        missing_values_features = "Filtering NAs by Features",
-        missing_values_samples = "Filtering NAs by Samples",
+        featureFiltering = "Feature Filtering",
+        missingValuesFeatures = "Filtering NAs by Features",
+        missingValuesSamples = "Filtering NAs by Samples",
         aggregation = "Aggregation",
         join = "Join"
     )
