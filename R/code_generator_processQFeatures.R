@@ -7,41 +7,41 @@
 #' @keywords internal
 #'
 
-codeGeneratorInitialization <- function(qf, step_number) {
-    vec <- names(qf)
-    if (step_number == 1) {
-        initial_setNames <- vec[grep(pattern = paste0("QFeaturesGUI#0"), vec)]
-        initial_setNames <- remove_QFeaturesGUI(initial_setNames)
-        step_setNames <- vec[grep(pattern = paste0("QFeaturesGUI#", step_number), vec)]
-        step_setNames <- remove_QFeaturesGUI(step_setNames)
-        codeLines <- sprintf(
-            "####################################
+codeGeneratorInitialization <- function(qf, step_number){
+  vec <- names(qf)
+  if(step_number == 1){
+    initial_setNames <- vec[grep(pattern = paste0("QFeaturesGUI#0"), vec)]
+    initial_setNames <- remove_QFeaturesGUI(initial_setNames)
+    step_setNames <- vec[grep(pattern = paste0("QFeaturesGUI#", step_number), vec)]
+    step_setNames <- remove_QFeaturesGUI(step_setNames)
+    codeLines <- sprintf(
+      "####################################
 ######### initial set names ########
 ####################################
 step0_setNames <- c(%s)\n
 ####################################
-####### Step number %s names ########
+####### Step number %s names ######## 
 ####################################
 step%s_setNames <- c(%s)\n",
-            paste(sprintf('"%s"', initial_setNames), collapse = ", \n\t"),
-            step_number,
-            step_number,
-            paste(sprintf('"%s"', step_setNames), collapse = ", \n\t")
-        )
-    } else {
-        step_setNames <- vec[grep(pattern = paste0("QFeaturesGUI#", step_number), vec)]
-        step_setNames <- remove_QFeaturesGUI(step_setNames)
-        codeLines <- sprintf(
-            "####################################
+      paste(sprintf('"%s"', initial_setNames), collapse = ", \n\t"),
+      step_number, 
+      step_number, 
+      paste(sprintf('"%s"', step_setNames), collapse = ", \n\t")
+      )
+  } else {
+    step_setNames <- vec[grep(pattern = paste0("QFeaturesGUI#", step_number), vec)]
+    step_setNames <- remove_QFeaturesGUI(step_setNames)
+    codeLines <- sprintf(
+      "####################################
 ####### Step number %s names ########
 ####################################
 step%s_setNames<- c(%s)\n",
-            step_number,
-            step_number,
-            paste(sprintf('"%s"', step_setNames), collapse = ", \n\t")
-        )
-    }
-    codeLines
+      step_number,
+      step_number,
+      paste(sprintf('"%s"', step_setNames), collapse = ", \n\t")
+      )
+  }
+  codeLines
 }
 
 #' @title Check for missing set
@@ -53,29 +53,28 @@ step%s_setNames<- c(%s)\n",
 #' @keywords internal
 #'
 
-check_for_missing_set <- function(qf, step_number) {
-    vec <- names(qf)
-    indice_to_remove <- c()
-    initial_setNames <- vec[grep(pattern = paste0("QFeaturesGUI#", step_number - 1), vec)]
-    initial <- gsub("_\\(QFeaturesGUI#[0-9]+\\)_*[a-z]*_*[a-z]*_*[0-9]*", "", initial_setNames)
-    currentStep_setNames <- vec[grep(pattern = paste0("QFeaturesGUI#", step_number), vec)]
-    current <- gsub("_\\(QFeaturesGUI#[0-9]+\\)_*[a-z]*_*[a-z]*_*[0-9]*", "", currentStep_setNames)
-    if (length(initial) != length(current)) {
-        for (i in seq_along(initial)) {
-            if (!(initial[i] %in% current)) {
-                indice_to_remove <- append(indice_to_remove, i)
-            }
-        }
-        initial_setNames <- initial_setNames[-indice_to_remove]
-        initial_setNames <- remove_QFeaturesGUI(initial_setNames)
-        codeLines <- sprintf(
-            "##After filtering steps one or more set has been deleted.\nstep%s_setNames <- c(%s)\n",
-            step_number - 1,
-            paste(sprintf('"%s"', initial_setNames), collapse = ", \n\t")
-        )
-        return(codeLines)
-    }
+check_for_missing_set <- function(qf,step_number){
+  vec <- names(qf)
+  indice_to_remove <- c()
+  initial_setNames <- vec[grep(pattern = paste0("QFeaturesGUI#",step_number-1), vec)]
+  initial <- gsub("_\\(QFeaturesGUI#[0-9]+\\)_*[a-z]*_*[a-z]*_*[0-9]*", "", initial_setNames)
+  currentStep_setNames <- vec[grep(pattern = paste0("QFeaturesGUI#",step_number),vec)]
+  current <- gsub("_\\(QFeaturesGUI#[0-9]+\\)_*[a-z]*_*[a-z]*_*[0-9]*", "", currentStep_setNames)
+   if(length(initial)!= length(current)){
+     for(i in seq_along(initial)){
+       if(!(initial[i] %in% current)){
+         indice_to_remove <- append(indice_to_remove,i)
+       }
+     }
+     initial_setNames <- initial_setNames[-indice_to_remove]
+     initial_setNames <- remove_QFeaturesGUI(initial_setNames)
+     codeLines <- sprintf("##After filtering steps one or more set has been deleted.\nstep%s_setNames <- c(%s)\n", 
+                          step_number-1,
+                          paste(sprintf('"%s"', initial_setNames), collapse = ", \n\t"))
+     return(codeLines)
+   }
 }
+  
 
 
 #' @title Code generator for aggregation tab
@@ -90,45 +89,37 @@ check_for_missing_set <- function(qf, step_number) {
 #' @keywords internal
 #'
 
-codeGeneratorAggregation <- function(method, fcol, step_number) {
-    codeLines <- sprintf(
-        "####################################
+codeGeneratorAggregation <- function(method, fcol, step_number){
+  codeLines <- sprintf(
+  "####################################
 ########### Aggregation ############
 ####################################
-qf <- aggregateFeatures(qf,
-\ti = step%s_setNames,
-\tname = step%s_setNames,
-\tfun = %s,
-\tfcol = '%s',
+qf <- aggregateFeatures(qf, 
+\ti = step%s_setNames, 
+\tname = step%s_setNames, 
+\tfun = %s, 
+\tfcol = '%s', 
 \tna.rm = TRUE
-)
-for (i in 1:length(step%s_setNames)){
-\tassayData <- assay(qf[[step%s_setNames[i]]])
-\tassayData[is.nan(assayData)] <- NA_real_
-\tassay(qf[[step%s_setNames[i]]]) <- assayData
-}\n",
-        step_number - 1,
-        step_number,
-        method,
-        fcol,
-        step_number,
-        step_number,
-        step_number
-    )
-    codeLines
+)\n",
+  step_number-1,
+  step_number,
+  method,
+  fcol
+  )
+  codeLines
 }
 
 #' @title Code generator for join tab
 #' @param step_number The step number
-#'
+#' 
 #' @return code line generated
 #' @rdname INTERNAL_codeGeneratorJoin
 #' @keywords internal
 #'
 
-codeGeneratorJoin <- function(step_number) {
-    codeLines <- sprintf(
-        "####################################
+codeGeneratorJoin <- function(step_number){
+  codeLines <- sprintf(
+"####################################
 ############### Join ###############
 ####################################
 qf <- joinAssays(
@@ -136,10 +127,10 @@ qf <- joinAssays(
 \ti = step%s_setNames,
 \tname = step%s_setNames
 )\n",
-        step_number - 1,
-        step_number
-    )
-    codeLines
+  step_number-1,
+  step_number
+  )
+  codeLines
 }
 
 #' @title Code generator for filtering missing values tab
@@ -152,11 +143,11 @@ qf <- joinAssays(
 #' @keywords internal
 #'
 
-codeGeneratorNA <- function(qf, pNA, type, step_number) {
-    codeLines <- check_for_missing_set(qf, step_number = step_number)
-    if (type == "features") {
-        codeLines <- c(codeLines, sprintf(
-            "####################################
+codeGeneratorNA <- function(qf, pNA, type, step_number){
+  codeLines <- check_for_missing_set(qf, step_number = step_number)
+  if(type == "features"){
+    codeLines <- c(codeLines, sprintf(
+      "####################################
 ###### Missing value features ######
 ####################################
 for (i in 1:length(step%s_setNames)){
@@ -166,16 +157,16 @@ for (i in 1:length(step%s_setNames)){
 \t)
 \tqf <- addAssayLink(qf, from = step%s_setNames[i], to = step%s_setNames[i])
 }",
-            step_number - 1,
-            step_number,
-            step_number - 1,
-            pNA,
-            step_number - 1,
-            step_number
-        ))
-    } else {
-        codeLines <- c(codeLines, sprintf(
-            "####################################
+      step_number-1,
+      step_number,
+      step_number-1,
+      pNA,
+      step_number-1,
+      step_number
+    ))
+  } else {
+    codeLines <- c(codeLines, sprintf(
+      "####################################
 ###### Missing value samples #######
 ####################################
 for(i in 1:length(step%s_setNames)){
@@ -188,31 +179,31 @@ for(i in 1:length(step%s_setNames)){
   qf[[step%s_setNames[i]]] <- qf[[step%s_setNames[i]]][, tableMetadata$pNA <= %s]
   qf <- addAssayLink(qf, from = step%s_setNames[i], to = step%s_setNames[i])
 }",
-            step_number - 1,
-            step_number - 1,
-            step_number - 1,
-            step_number,
-            step_number - 1,
-            pNA,
-            step_number - 1,
-            step_number
-        ))
-    }
-    codeLines
+      step_number-1,
+      step_number-1,
+      step_number-1,
+      step_number,
+      step_number-1,
+      pNA,
+      step_number-1,
+      step_number
+    ))
+  }
+  codeLines
 }
 
 #' @title Code generator for normalisation tab
 #' @param method the method used to do the normalisation
 #' @param step_number The step number
-#'
+#' 
 #' @return code lines generated
 #' @rdname INTERNAL_codeGeneratorNormalisation
 #' @keywords internal
 #'
 
-codeGeneratorNormalisation <- function(method, step_number) {
-    codeLines <- sprintf(
-        "####################################
+codeGeneratorNormalisation <- function(method, step_number){
+  codeLines <- sprintf(
+    "####################################
 ########## Normalisation ###########
 ####################################
 for(i in 1:length(step%s_setNames)){
@@ -222,14 +213,14 @@ for(i in 1:length(step%s_setNames)){
 \t)
 \tqf <- addAssayLink(qf, from = step%s_setNames[i], to = step%s_setNames[i])
 }\n",
-        step_number - 1,
-        step_number,
-        step_number - 1,
-        method,
-        step_number - 1,
-        step_number
-    )
-    codeLines
+    step_number-1,
+    step_number,
+    step_number-1,
+    method,
+    step_number-1,
+    step_number
+  )
+  codeLines
 }
 
 #' @title Code generator for Zero to NA tab
@@ -349,63 +340,62 @@ for(i in 1:length(step%s_setNames)){
 #' @keywords internal
 #'
 
-codeGeneratorFiltering <- function(qf, condition, type, step_number) {
-    codeLines <- check_for_missing_set(qf, step_number = step_number)
-    as_r_string_literal <- function(x) {
-        encodeString(as.character(x), quote = "\"")
+codeGeneratorFiltering <- function(qf, condition, type, step_number){
+  codeLines <- check_for_missing_set(qf, step_number = step_number)
+  as_r_string_literal <- function(x){
+    encodeString(as.character(x), quote = "\"")
+  }
+  as_r_vector_literal  <- function(values){
+    if(is.numeric(values[[1]])){
+      paste0("c(", paste(values, collapse = ","), ")")
+    } else {
+      escaped_values <- vapply(values, as_r_string_literal, character(1))
+      paste0("c(", paste(escaped_values, collapse = ","), ")")
     }
-    as_r_vector_literal <- function(values) {
-        if (is.numeric(values[[1]])) {
-            paste0("c(", paste(values, collapse = ","), ")")
-        } else {
-            escaped_values <- vapply(values, as_r_string_literal, character(1))
-            paste0("c(", paste(escaped_values, collapse = ","), ")")
-        }
-    }
-    if (length(condition) == 0) {
-        codeLines <- c(codeLines, sprintf(
-            "####################################
+  }
+  if(length(condition) == 0){
+    codeLines <- c(codeLines,sprintf(
+      "####################################
 ######## %s filtering ########
 ####################################
 ## No %s filtering applied\n",
-            type,
-            type
-        ))
-    } else {
-        if (type == "features") {
-            final <- "se <- se["
-            for (i in 1:length(condition)) {
-                annotation <- as_r_string_literal(condition[[i]]$annotation)
-                if (condition[[i]]$annotation == ".qfeaturesgui_rowname") {
-                    if (condition[[i]]$operator == "==") {
-                        build_condition <- paste0("rownames(rowData(se)) %in% ")
-                        vector <- as_r_vector_literal(condition[[i]]$value)
-                    } else {
-                        build_condition <- paste0("!(rownames(rowData(se)) %in% ")
-                        vector <- paste0(as_r_vector_literal(condition[[i]]$value), ")")
-                    }
-                } else {
-                    if (condition[[i]]$operator == "==") {
-                        build_condition <- paste0("rowData(se)[[", annotation, "]] %in% ")
-                        vector <- as_r_vector_literal(condition[[i]]$value)
-                    } else if (condition[[i]]$operator == "!=") {
-                        build_condition <- paste0("!(rowData(se)[[", annotation, "]] %in% ")
-                        vector <- paste0(as_r_vector_literal(condition[[i]]$value), ")")
-                    } else {
-                        build_condition <- paste0("rowData(se)[[", annotation, "]] ", condition[[i]]$operator, " ")
-                        vector <- as_r_vector_literal(condition[[i]]$value)
-                    }
-                }
-                build_condition <- paste0(build_condition, vector)
-                if (i == 1) {
-                    final <- paste0(final, build_condition)
-                } else {
-                    final <- paste0(final, " & ", build_condition)
-                }
-            }
-            condition_used <- paste0(final, ",]")
-            codeLines <- c(codeLines, sprintf(
-                "####################################
+      type,
+      type))
+  } else {
+    if(type == "features"){
+      final = "se <- se["
+      for(i in 1:length(condition)){
+        annotation <- as_r_string_literal(condition[[i]]$annotation)
+        if(condition[[i]]$annotation == ".qfeaturesgui_rowname"){
+          if(condition[[i]]$operator == "=="){
+            build_condition <- paste0("rownames(rowData(se)) %in% ")
+            vector <- as_r_vector_literal(condition[[i]]$value)
+          } else {
+            build_condition <- paste0("!(rownames(rowData(se)) %in% ")
+            vector <- paste0(as_r_vector_literal(condition[[i]]$value), ")")
+          }
+        } else {
+          if(condition[[i]]$operator == "=="){
+            build_condition <- paste0("rowData(se)[[",annotation,"]] %in% ")
+            vector <- as_r_vector_literal(condition[[i]]$value)
+          } else if(condition[[i]]$operator == "!=") {
+            build_condition <- paste0("!(rowData(se)[[", annotation, "]] %in% ")
+            vector <- paste0(as_r_vector_literal(condition[[i]]$value), ")")
+          } else {
+            build_condition <- paste0("rowData(se)[[", annotation, "]] ", condition[[i]]$operator, " ")
+            vector <- as_r_vector_literal(condition[[i]]$value)
+          }
+        }
+        build_condition <- paste0(build_condition, vector)
+        if(i == 1){
+          final <- paste0(final,build_condition)
+        } else {
+          final <- paste0(final, " & ", build_condition)
+        }
+      }
+      condition_used <- paste0(final, ",]")
+      codeLines <- c(codeLines, sprintf(
+        "####################################
 ######## features filtering ########
 ####################################
 for(i in 1:length(step%s_setNames)){
@@ -414,47 +404,47 @@ for(i in 1:length(step%s_setNames)){
 \tqf[[step%s_setNames[i]]] <- se
 \tqf <- addAssayLink(qf, from = step%s_setNames[i], to = step%s_setNames[i])
 }\n",
-                step_number - 1,
-                step_number - 1,
-                condition_used,
-                step_number,
-                step_number - 1,
-                step_number
-            ))
+        step_number-1,
+        step_number-1,
+        condition_used,
+        step_number,
+        step_number-1,
+        step_number
+      ))
+    } else {
+      final = "se <- se[,"
+      for(i in 1:length(condition)){
+        annotation <- as_r_string_literal(condition[[i]]$annotation)
+        if(condition[[i]]$annotation == ".qfeaturesgui_rowname"){
+          if(condition[[i]]$operator == "=="){
+            build_condition <- paste0("rownames(colData(se)) %in% ")
+            vector <- as_r_vector_literal(condition[[i]]$value)
+          } else {
+            build_condition <- paste0("!(rownames(colData(se)) %in% ")
+            vector <- paste0(as_r_vector_literal(condition[[i]]$value), ")")
+          }
         } else {
-            final <- "se <- se[,"
-            for (i in 1:length(condition)) {
-                annotation <- as_r_string_literal(condition[[i]]$annotation)
-                if (condition[[i]]$annotation == ".qfeaturesgui_rowname") {
-                    if (condition[[i]]$operator == "==") {
-                        build_condition <- paste0("rownames(colData(se)) %in% ")
-                        vector <- as_r_vector_literal(condition[[i]]$value)
-                    } else {
-                        build_condition <- paste0("!(rownames(colData(se)) %in% ")
-                        vector <- paste0(as_r_vector_literal(condition[[i]]$value), ")")
-                    }
-                } else {
-                    if (condition[[i]]$operator == "==") {
-                        build_condition <- paste0("colData(se)[[", annotation, "]] %in% ")
-                        vector <- as_r_vector_literal(condition[[i]]$value)
-                    } else if (condition[[i]]$operator == "!=") {
-                        build_condition <- paste0("!(colData(se)[[", annotation, "]] %in% ")
-                        vector <- paste0(as_r_vector_literal(condition[[i]]$value), ")")
-                    } else {
-                        build_condition <- paste0("colData(se)[[", annotation, "]] ", condition[[i]]$operator, " ")
-                        vector <- as_r_vector_literal(condition[[i]]$value)
-                    }
-                }
-                build_condition <- paste0(build_condition, vector)
-                if (i == 1) {
-                    final <- paste0(final, build_condition)
-                } else {
-                    final <- paste0(final, " & ", build_condition)
-                }
-            }
-            condition_used <- paste0(final, "]")
-            codeLines <- c(codeLines, sprintf(
-                "####################################
+          if(condition[[i]]$operator == "=="){
+            build_condition <- paste0("colData(se)[[",annotation,"]] %in% ")
+            vector <- as_r_vector_literal(condition[[i]]$value)
+          } else if(condition[[i]]$operator == "!=") {
+            build_condition <- paste0("!(colData(se)[[", annotation, "]] %in% ")
+            vector <- paste0(as_r_vector_literal(condition[[i]]$value), ")")
+          } else {
+            build_condition <- paste0("colData(se)[[", annotation, "]] ", condition[[i]]$operator, " ")
+            vector <- as_r_vector_literal(condition[[i]]$value)
+          }
+        }
+        build_condition <- paste0(build_condition, vector)
+        if(i == 1){
+          final <- paste0(final,build_condition)
+        } else {
+          final <- paste0(final, " & ", build_condition)
+        }
+      }
+      condition_used <- paste0(final, "]")
+      codeLines <- c(codeLines, sprintf(
+        "####################################
 ######## samples filtering #########
 ####################################
 for(i in 1:length(step%s_setNames)){
@@ -463,14 +453,14 @@ for(i in 1:length(step%s_setNames)){
 \tqf[[step%s_setNames[i]]] <- se
 \tqf <- addAssayLink(qf, from = step%s_setNames[i], to = step%s_setNames[i])
 }\n",
-                step_number - 1,
-                step_number - 1,
-                condition_used,
-                step_number,
-                step_number - 1,
-                step_number
-            ))
-        }
+        step_number-1,
+        step_number-1,
+        condition_used,
+        step_number,
+        step_number-1,
+        step_number
+      ))
     }
-    codeLines
+  }
+  codeLines
 }

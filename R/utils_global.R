@@ -158,10 +158,12 @@ clickableMessageItem <- function(id, title, time, type = c("error", "warning")) 
 #' @importFrom htmltools HTML div
 #'
 #' @rdname INTERNAL_show_exception_notification
-show_exception_notification <- function(component_name,
-    type = c("error", "warning"),
-    time,
-    duration = 30) {
+show_exception_notification <- function(
+      component_name,
+      type = c("error", "warning"),
+      time,
+      duration = 30
+) {
     type <- match.arg(type)
 
     title <- paste0(
@@ -296,10 +298,12 @@ loading <- function(msg) {
 #' @return A UI element wrapped with waiter behavior.
 #' @rdname INTERNAL_with_output_waiter
 #' @keywords internal
-with_output_waiter <- function(element,
-    html = waiter::spin_fading_circles(),
-    color = "rgba(0, 0, 0, 0.25)",
-    image = "") {
+with_output_waiter <- function(
+      element,
+      html = waiter::spin_fading_circles(),
+      color = "rgba(0, 0, 0, 0.25)",
+      image = ""
+) {
     output_id <- element$attribs$id
     if (is.null(output_id) && is.list(element) && length(element) > 0L) {
         first_child <- element[[1]]
@@ -858,34 +862,35 @@ add_assays_to_global_rv <- function(processed_qfeatures, step_number, type, varF
 
         .qf$qfeatures[[new_name]] <- assay_to_add
         if (is.null(varFrom) || is.null(varTo)) {
-            .qf$qfeatures <- addAssayLink(
-                .qf$qfeatures,
-                from = name,
-                to = new_name
-            )
-            n_added <- n_added + 1L
+          .qf$qfeatures <- addAssayLink(
+            .qf$qfeatures,
+            from = name,
+            to = new_name
+          )
+          n_added <- n_added + 1L
         } else {
-            .qf$qfeatures <- addAssayLink(
-                .qf$qfeatures,
-                from = name,
-                to = new_name,
-                varFrom = varFrom,
-                varTo = varTo
-            )
-            n_added <- n_added + 1L
+          .qf$qfeatures <- addAssayLink(
+            .qf$qfeatures,
+            from = name,
+            to = new_name,
+            varFrom = varFrom,
+            varTo = varTo
+          )
+          n_added <- n_added + 1L
         }
+        
     }
     alert_text <- paste0(
-        n_added, " set", if (n_added != 1L) "s" else "",
-        " added to QFeatures."
+      n_added, " set", if (n_added != 1L) "s" else "",
+      " added to QFeatures."
     )
     if (n_skipped_empty > 0L) {
-        alert_text <- paste0(
-            alert_text, " ",
-            n_skipped_empty, " empty set",
-            if (n_skipped_empty != 1L) "s were" else " was",
-            " skipped."
-        )
+      alert_text <- paste0(
+        alert_text, " ",
+        n_skipped_empty, " empty set",
+        if (n_skipped_empty != 1L) "s were" else " was",
+        " skipped."
+      )
     }
     shinyalert(
         title = "Step saved",
@@ -1484,9 +1489,9 @@ percent_removed <- function(qfeatures_before_filtering, qfeatures_after_filterin
 #'
 
 count_features_rows <- function(qfeatures) {
-    sum(vapply(seq_along(qfeatures), function(i) {
-        nrow(qfeatures[[i]])
-    }, integer(1)))
+  sum(vapply(seq_along(qfeatures), function(i) {
+    nrow(qfeatures[[i]])
+  }, integer(1)))
 }
 
 #' A function that will return the number of samples/features that have been removed
@@ -1538,15 +1543,16 @@ number_removed <- function(qfeatures_before_filtering, qfeatures_after_filtering
 #' @rdname INTERNAL_annotation_cols
 #' @keywords internal
 annotation_cols <- function(x, what) {
-    if (length(x) == 0) {
-        character(0)
-    } else {
-        annot <- switch(what,
-            rowData = rowData(x)[[1]],
-            colData = colData(x)
-        )
-        colnames(annot)
-    }
+  if (length(x) == 0) {
+    character(0)
+  } else {
+    annot <- switch(
+      what,
+      rowData = rowData(x)[[1]],
+      colData = colData(x)
+    )
+    colnames(annot)
+  }
 }
 
 #' A function that will aggregate all the assays of a qfeatures
@@ -1558,8 +1564,7 @@ annotation_cols <- function(x, what) {
 #'   the features within each assay. This variable is either a character or a (possibly
 #'   sparse) matrix.
 #' @return A `QFeatures` object with assays aggregated according to `fcol` using the
-#'   selected `method`. Any `NaN` values produced by aggregation are converted
-#'   to `NA`.
+#'   selected `method`.
 #' @rdname INTERNAL_aggregation_qfeatures
 #' @keywords internal
 #' @importFrom QFeatures normalize QFeatures aggregateFeatures
@@ -1570,21 +1575,6 @@ annotation_cols <- function(x, what) {
 #'
 aggregation_qfeatures <- function(qfeatures, method,
                                   fcol) {
-    aggregation_fun <- list(
-        robustSummary = MsCoreUtils::robustSummary,
-        medianPolish = MsCoreUtils::medianPolish,
-        colMeans = base::colMeans,
-        colMedians = matrixStats::colMedians,
-        colSums = base::colSums
-    )[[method]]
-    safe_aggregation_fun <- function(x, ...) {
-        out <- aggregation_fun(x, ...)
-        if (is.numeric(out)) {
-            out[is.nan(out)] <- NA_real_
-        }
-        out
-    }
-
     n <- length(qfeatures)
     caption <- if (n > 0L) {
         paste0("Aggregation of 1/", n, " sets")
@@ -1599,7 +1589,13 @@ aggregation_qfeatures <- function(qfeatures, method,
         task_loader_update(loader, paste0("Aggregation of ", i, "/", n, " sets"))
         aggregateFeatures(
             object = qfeatures[[name]],
-            fun = safe_aggregation_fun,
+            fun = list(
+                robustSummary = MsCoreUtils::robustSummary,
+                medianPolish = MsCoreUtils::medianPolish,
+                colMeans = base::colMeans,
+                colMedians = matrixStats::colMedians,
+                colSums = base::colSums
+            )[[method]],
             fcol = fcol,
             na.rm = TRUE
         )
@@ -1621,17 +1617,16 @@ aggregation_qfeatures <- function(qfeatures, method,
 #' @importFrom QFeatures joinAssays createPrecursorId
 #'
 join_qfeatures <- function(qfeatures, fcol, fcol2 = NULL) {
-    if (!is.null(fcol2)) {
-        fcol_combined <- paste0(fcol, "_", fcol2)
-        qfeatures <- createPrecursorId(
-            qfeatures,
-            name = fcol_combined,
-            fcols = c(fcol, fcol2)
-        )
-        fcol <- fcol_combined
-    }
-    qf <- joinAssays(qfeatures, names(qfeatures), fcol = fcol)
-    suppressMessages(suppressWarnings(qf[, , "joinedAssay"]))
+  if (!is.null(fcol2)) {
+    fcol_combined <- paste0(fcol, "_", fcol2)
+    qfeatures <- createPrecursorId(
+      qfeatures, name = fcol_combined,
+      fcols = c(fcol, fcol2)
+    )
+    fcol <- fcol_combined
+  }
+  qf <- joinAssays(qfeatures, names(qfeatures), fcol = fcol)
+  suppressMessages(suppressWarnings(qf[, , "joinedAssay"]))
 }
 
 #' A function that will add the assays to the package-level `.qf$qfeatures`
@@ -1653,30 +1648,30 @@ join_qfeatures <- function(qfeatures, fcol, fcol2 = NULL) {
 #' @importFrom shinyalert shinyalert
 #'
 add_joined_assay_to_global_rv <- function(processed_qfeatures, step_number, featuresType, type) {
-    name <- names(processed_qfeatures)[length(processed_qfeatures)]
-    new_name <- paste0(
-        featuresType, "_",
-        strsplit(name, "_QFeaturesGUI#", fixed = TRUE)[[1]][[1]],
-        "_(QFeaturesGUI#", step_number, ")",
-        "_", type, "_", step_number
+  name <- names(processed_qfeatures)[length(processed_qfeatures)]
+  new_name <- paste0(featuresType, "_",
+    strsplit(name,"_QFeaturesGUI#",fixed =TRUE)[[1]][[1]],
+    "_(QFeaturesGUI#", step_number, ")",
+    "_", type, "_", step_number
     )
-    .qf$qfeatures[[new_name]] <- processed_qfeatures[[name]]
-    from_pattern <- paste0("QFeaturesGUI#", step_number - 1, "\\)")
-    from_names <- grep(from_pattern, names(.qf$qfeatures), value = TRUE)
-    .qf$qfeatures <- addAssayLink(
-        .qf$qfeatures,
-        from = from_names,
-        to = new_name
-    )
-
-    n <- length(processed_qfeatures)
-    shinyalert(
-        title = "Step saved",
-        text = "1 set added to QFeatures.",
-        type = "success",
-        confirmButtonCol = "#3c8dbc",
-        closeOnClickOutside = TRUE
-    )
+  .qf$qfeatures[[new_name]] <- processed_qfeatures[[name]]
+  from_pattern <- paste0("QFeaturesGUI#", step_number - 1, "\\)")
+  from_names <- grep(from_pattern, names(.qf$qfeatures), value = TRUE)
+  .qf$qfeatures <- addAssayLink(
+    .qf$qfeatures,
+    from = from_names,
+    to = new_name
+  )
+  
+  n <- length(processed_qfeatures)
+  shinyalert(
+    title = "Step saved",
+    text = "1 set added to QFeatures.",
+    type = "success", 
+    confirmButtonCol = "#3c8dbc",
+    closeOnClickOutside = TRUE
+  )
+  
 }
 
 #' Create tooltip
@@ -1722,54 +1717,54 @@ add_joined_assay_to_global_rv <- function(processed_qfeatures, step_number, feat
 #'
 #' @rdname INTERNAL_bs3Tooltip
 #' @keywords internal
-#'
+#' 
 bs3Tooltip <- function(trigger,
-    tooltipText,
-    placement = c("right", "left", "top", "bottom"),
-    icon = "fa-info-circle") {
-    stopifnot(
-        is.character(tooltipText), length(tooltipText) == 1L,
-        is.character(icon), length(icon) == 1L
+                       tooltipText,
+                       placement = c("right", "left", "top", "bottom"),
+                       icon = "fa-info-circle") {
+  stopifnot(
+    is.character(tooltipText), length(tooltipText) == 1L,
+    is.character(icon), length(icon) == 1L
+  )
+  placement <- match.arg(placement)
+  
+  if (is.character(trigger)) {
+    stopifnot(length(trigger) == 1L)
+    trigger <- tags$span(
+      trigger,
+      tags$i(
+        class = paste("fa", icon),
+        style = "cursor: pointer; margin-left: 5px;"
+      )
     )
-    placement <- match.arg(placement)
-
-    if (is.character(trigger)) {
-        stopifnot(length(trigger) == 1L)
-        trigger <- tags$span(
-            trigger,
-            tags$i(
-                class = paste("fa", icon),
-                style = "cursor: pointer; margin-left: 5px;"
-            )
-        )
-    } else if (!inherits(trigger, "shiny.tag")) {
-        stop("'trigger' must be a character(1) or a Shiny tag object.")
-    }
-
-    existing_style <- trigger$attribs$style
-    merged_style <- if (is.null(existing_style) || !nzchar(existing_style)) {
-        "cursor: pointer;"
-    } else {
-        paste0(sub(";?\\s*$", "", existing_style), "; cursor: pointer;")
-    }
-
-    htmltools::tagList(
-        htmltools::singleton(
-            shiny::tags$script(shiny::HTML(
-                "$(function() {
+  } else if (!inherits(trigger, "shiny.tag")) {
+    stop("'trigger' must be a character(1) or a Shiny tag object.")
+  }
+  
+  existing_style <- trigger$attribs$style
+  merged_style <- if (is.null(existing_style) || !nzchar(existing_style)) {
+    "cursor: pointer;"
+  } else {
+    paste0(sub(";?\\s*$", "", existing_style), "; cursor: pointer;")
+  }
+  
+  htmltools::tagList(
+    htmltools::singleton(
+      shiny::tags$script(shiny::HTML(
+        "$(function() {
              $('body').tooltip({
                selector: '[data-toggle=\"tooltip\"]',
                container: 'body'
              });
            });"
-            ))
-        ),
-        tagAppendAttributes(
-            trigger,
-            title = tooltipText,
-            `data-toggle` = "tooltip",
-            `data-placement` = placement,
-            style = merged_style
-        )
+      ))
+    ),
+    tagAppendAttributes(
+      trigger,
+      title = tooltipText,
+      `data-toggle` = "tooltip",
+      `data-placement` = placement,
+      style = merged_style
     )
+  )
 }

@@ -36,42 +36,43 @@ interface_module_qc_metrics <- function(id, type) {
                     label = "Select Dimension Reduction Method"
                 ),
                 selectInput(
-                    inputId = NS(id, "pca_color"),
-                    label = "Color by",
-                    choices = NULL
+                  inputId = NS(id, "pca_color"),
+                  label = "Color by",
+                  choices = NULL
                 ),
                 checkboxInput(
-                    inputId = NS(id, "scale"),
-                    label = "Scale data",
-                    value = TRUE
+                  inputId = NS(id, "scale"),
+                  label = "Scale data",
+                  value = TRUE
                 ),
                 checkboxInput(
-                    inputId = NS(id, "center"),
-                    label = "Center data",
-                    value = TRUE
+                  inputId = NS(id, "center"),
+                  label = "Center data",
+                  value = TRUE
                 ),
                 checkboxInput(
-                    inputId = NS(id, "show_legend"),
-                    label = "Show Legend",
-                    value = FALSE
+                  inputId = NS(id, "show_legend"),
+                  label = "Show Legend",
+                  value = FALSE
                 ),
                 numericInput(
-                    inputId = NS(id, "color_width"),
-                    label = "Color value max length (chr)",
-                    value = 10,
-                    min = 5,
-                    max = 30
+                  inputId = NS(id, "color_width"),
+                  label = "Color value max length (chr)",
+                  value = 10,
+                  min = 5,
+                  max = 30
                 )
+                
             ),
             box(
-                title = "Dimension Reduction",
-                status = "primary",
-                width = 8,
-                solidHeader = FALSE,
-                collapsible = FALSE,
-                interface_module_pca(
-                    NS(id, "features")
-                )
+              title = "Dimension Reduction",
+              status = "primary",
+              width = 8,
+              solidHeader = FALSE,
+              collapsible = FALSE,
+              interface_module_pca(
+                NS(id, "features")
+              ) 
             )
         ),
         fluidRow(
