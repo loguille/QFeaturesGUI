@@ -39,8 +39,8 @@ server_module_join_tab <- function(id, step_number, step_rv, parent_rv) {
     })
     
     feature_type <- reactive({
-      bool <- str_detect(input$feature_type, pattern = '"')
-      shinyFeedback::feedbackDanger("feature_type", isTRUE(bool), "\"\ character is not allowed")
+      bool <- grepl(x = input$feature_type, pattern = '"')
+      shinyFeedback::feedbackDanger("feature_type", bool, "\"\ character is not allowed")
     })
     
     output$output <- renderText(feature_type())
