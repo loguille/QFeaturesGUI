@@ -20,7 +20,7 @@ interface_module_normalisation_tab <- function(id) {
               collapsible = TRUE,
               selectInput(
                 inputId = NS(id, "method"),
-                label = "method",
+                label = "Method",
                 choices = c(
                   "sum",
                   "max",

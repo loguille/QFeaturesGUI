@@ -7,19 +7,19 @@
 importQFeatures(colData = NULL, assayData = NULL, maxSize = 1000)
 }
 \arguments{
-\item{colData}{A dataframe that contains the sample table.}
+\item{colData}{A data frame that contains the sample table.}
 
-\item{assayData}{A dataframe that contains the input table.}
+\item{assayData}{A data frame that contains the input table.}
 
-\item{maxSize}{An integer that change shiny.maxRequestSize value, this value has to be in Mb.}
+\item{maxSize}{An integer that changes the shiny.maxRequestSize value, in MB.}
 }
 \value{
-Return the "importQFeatures" shiny app object.
+The "importQFeatures" Shiny app object.
 }
 \description{
-importQFeatures is a simple graphical interface to import bulk and single-cell proteomic data.
-The app use the \code{\link[QFeatures]{readQFeatures}} function from the QFeatures package to convert simple table (single or multiple, csv or tsv) to a QFeatures object.
-The app allow to convert tables to a QFeatures object.
+importQFeatures is a simple graphical interface to import bulk and single-cell proteomics data.
+The app uses the \code{\link[QFeatures]{readQFeatures}} function from the QFeatures package to convert simple tables (single or multiple, CSV or TSV) to a QFeatures object.
+The app allows users to convert tables to a QFeatures object.
 }
 \examples{
 library(QFeaturesGUI)

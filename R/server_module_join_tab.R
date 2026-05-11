@@ -31,9 +31,9 @@ server_module_join_tab <- function(id, step_number, step_rv, parent_rv) {
       n <- length(assays_to_process())
       div(
         style = "text-align : center; padding: 60px 20px;",
-        p("Sets will be joined by combining rownames of sets."),
+        p("Sets will be joined by combining set row names."),
         p(
-          paste(n, "sets will be join in 1 set.")
+          paste(n, "sets will be joined into 1 set.")
         ),
       )    
     })
@@ -48,7 +48,7 @@ server_module_join_tab <- function(id, step_number, step_rv, parent_rv) {
     observeEvent(input$export, {
       req(assays_to_process())
       with_task_loader(
-        caption = "Be aware that join table can be quite time consuming for large datasets.",
+        caption = "Joining tables can be quite time consuming for large datasets.",
         expr = {
           processed_assays <- error_handler(
             joinAssays,

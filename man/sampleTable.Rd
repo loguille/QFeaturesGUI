@@ -3,7 +3,7 @@
 \docType{data}
 \name{sampleTable}
 \alias{sampleTable}
-\title{Single cell sample annotation}
+\title{Single-cell sample annotation}
 \format{
 An object of class \code{data.frame} with 64 rows and 6 columns.
 }
@@ -22,14 +22,18 @@ A data frame with 48 observations on the following 6 variables.
 }
 }
 \details{
-##' The dataset is a subset of the SCoPE2 dataset (version 2, Specht
+The dataset is a subset of the SCoPE2 dataset (version 2, Specht
 et al. 2019,
 \href{https://www.biorxiv.org/content/10.1101/665307v3}{BioRXiv}). The
 input files \code{batch.csv} and \code{annotation.csv} were downloaded from a
 \href{https://drive.google.com/drive/folders/1VzBfmNxziRYqayx3SP-cOe2gu129Obgx}{Google Drive repository}.
-The two files were loaded and the columns names were adapted for
+The two files were loaded and the column names were adapted for
 consistency with \code{mqScpData} table (see \code{?mqScpData}). The two
-tables were filtered to contain only sets present in ``mqScpData\verb{. The tables were then merged based on the run ID, hence merging the sample annotation and the batch annotation. Finally, annotation for the blank run was added manually. The data is stored as a }data.frame`.
+tables were filtered to contain only sets present in \code{mqScpData}.
+The tables were then merged based on the run ID, hence merging the
+sample annotation and the batch annotation. Finally, annotation
+for the blank run was added manually. The data is stored as a
+\code{data.frame}.
 }
 \seealso{
 \code{readSCP()} from the \code{scp} package to see how this file is used.
