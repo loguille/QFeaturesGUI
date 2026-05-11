@@ -7,7 +7,8 @@
 processQFeatures(
   qfeatures,
   initialSets = seq_along(qfeatures),
-  prefilledSteps = c("sample_filtering", "feature_filtering")
+  prefilledSteps = c("sampleFiltering", "featureFiltering", "missingValuesFeatures",
+    "missingValuesSamples", "normalisation", "aggregation", "join", "aggregation")
 )
 }
 \arguments{

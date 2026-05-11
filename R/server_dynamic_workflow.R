@@ -33,14 +33,14 @@ server_dynamic_workflow <- function(input, output, session) {
             # Old module instances survive but write to orphaned IDs no longer
             # present in the UI, so their stale state is completely harmless.
             module_id <- switch(global_rv$workflow_config[[i]],
-                "Sample Filtering"          = paste0("sample_filtering_", i, "_v", v),
-                "Feature Filtering"         = paste0("feature_filtering_", i, "_v", v),
+                "Sample Filtering"          = paste0("sampleFiltering_", i, "_v", v),
+                "Feature Filtering"         = paste0("featureFiltering_", i, "_v", v),
                 "Normalisation"             = paste0("normalisation_", i, "_v", v),
-                "Zero to NA"                = paste0("zero_to_na_", i, "_v", v),
-                "Log Transform"             = paste0("log_transform_", i, "_v", v),
+                "Zero to NA"                = paste0("zeroToNA_", i, "_v", v),
+                "Log Transform"             = paste0("logTransform_", i, "_v", v),
                 "Imputation"                = paste0("imputation_", i, "_v", v),
-                "Filtering NAs by Features" = paste0("missing_values_features_", i, "_v", v),
-                "Filtering NAs by Samples"  = paste0("missing_values_samples_", i, "_v", v),
+                "Filtering NAs by Features" = paste0("missingValuesFeatures_", i, "_v", v),
+                "Filtering NAs by Samples"  = paste0("missingValuesSamples_", i, "_v", v),
                 "Aggregation"               = paste0("aggregation_",i,"_v",v),
                 "Join"                      = paste0("join_",i,"_v",v)
             )

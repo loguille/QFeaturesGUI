@@ -59,8 +59,14 @@
 processQFeatures <- function(qfeatures,
     initialSets = seq_along(qfeatures),
     prefilledSteps = c(
-        "sample_filtering",
-        "feature_filtering"
+        "sampleFiltering",
+        "featureFiltering",
+        "missingValuesFeatures",
+        "missingValuesSamples",
+        "normalisation",
+        "aggregation",
+        "join",
+        "aggregation"
     )) {
     ## Validate QFeatures input
     qfeatures <- check_qfeatures(qfeatures)
