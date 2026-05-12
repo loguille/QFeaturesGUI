@@ -392,8 +392,7 @@ server_module_annotation_plot <- function(id,
             condition_mask[is.na(condition_mask)] <- FALSE
             annotation_values()[condition_mask]
         })
-        observe({
-          output$plot <- renderPlotly({
+        output$plot <- renderPlotly({
             annotation <- annotation_values()
             filtered <- filtered_annotation()
             selected <- selected_annotation()
@@ -421,7 +420,6 @@ server_module_annotation_plot <- function(id,
               assay_name = plot_title,
               annotation_name = annotation_label
             )
-          })
         })
     })
 }
