@@ -400,7 +400,7 @@ server_module_annotation_plot <- function(id,
                     anchorId = "alert",
                     alertId = "alert_filter",
                     title = "Warning",
-                    content = "With the selected filtering parameters, no data will be remaining across all sets.",
+                    content = "With the selected filtering parameters, no data will remain across all sets.",
                     append = FALSE,
                     style = "warning"
                 )
@@ -481,7 +481,7 @@ annotation_plot_wrapper <- function(annotation,
         layout(
             barmode = "group",
             xaxis = list(title = paste0("Annotation Values (", annotation_name, ")")),
-            yaxis = list(title = "Number of Appearance"),
+            yaxis = list(title = "Number of appearances"),
             title = assay_name
         ) %>%
         config(displaylogo = FALSE, toImageButtonOptions = list(

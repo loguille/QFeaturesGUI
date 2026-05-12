@@ -599,7 +599,7 @@ check_qfeatures <- function(qfeatures) {
 #' to their displayed names used in the UI.
 #'
 #' @param prefilledSteps Character vector of workflow step identifiers
-#'   (e.g. \code{"sample_filtering"}).
+#'   (e.g. \code{"sampleFiltering"}).
 #'
 #' @return A character vector of display names for workflow steps.
 #'

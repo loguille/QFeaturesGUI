@@ -19,7 +19,7 @@ interface_module_join_tab <- function(id) {
       shinyFeedback::useShinyFeedback(),
       textInput(
         NS(id, "feature_type"),
-        label = "Choose the type of features your set contain."
+        label = "Choose the type of features your set contains."
       ),
       textOutput(
         NS(id, "output")
