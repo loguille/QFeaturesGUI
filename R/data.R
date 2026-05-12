@@ -1,5 +1,5 @@
 # This documentation is coming from the scp package.
-# This package use the same tables as example data.
+# This package uses the same tables as example data.
 ##' @title Example MaxQuant/SCoPE2 output
 ##'
 ##' @description
@@ -168,7 +168,7 @@
 ##' @md
 "inputTable"
 
-##' @title Single cell sample annotation
+##' @title Single-cell sample annotation
 ##'
 ##' @description
 ##'
@@ -184,14 +184,14 @@
 ##'
 ##' @details
 ##'
-##' ##' The dataset is a subset of the SCoPE2 dataset (version 2, Specht
+##' The dataset is a subset of the SCoPE2 dataset (version 2, Specht
 ##' et al. 2019,
 ##' [BioRXiv](https://www.biorxiv.org/content/10.1101/665307v3)). The
 ##' input files `batch.csv` and `annotation.csv` were downloaded from a
 ##' [Google Drive repository](https://drive.google.com/drive/folders/1VzBfmNxziRYqayx3SP-cOe2gu129Obgx).
-##' The two files were loaded and the columns names were adapted for
+##' The two files were loaded and the column names were adapted for
 ##' consistency with `mqScpData` table (see `?mqScpData`). The two
-##' tables were filtered to contain only sets present in ``mqScpData`.
+##' tables were filtered to contain only sets present in `mqScpData`.
 ##' The tables were then merged based on the run ID, hence merging the
 ##' sample annotation and the batch annotation. Finally, annotation
 ##' for the blank run was added manually. The data is stored as a

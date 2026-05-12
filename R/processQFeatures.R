@@ -19,11 +19,11 @@
 #'
 #' @param prefilledSteps A character vector specifying the initial workflow
 #'   steps to display when the application launches. Steps must be provided
-#'   using their internal identifiers (e.g. \code{"sample_filtering"},
-#'   \code{"feature_filtering"}, \code{"normalisation"}).
+#'   using their internal identifiers (e.g. \code{"sampleFiltering"},
+#'   \code{"featureFiltering"}, \code{"normalisation"}).
 #'
 #' @return
-#' The processQFeatures shiny application.
+#' The processQFeatures Shiny application.
 #'
 #' @details
 #' The application provides a drag-and-drop workflow builder that allows

@@ -58,7 +58,7 @@ interface_module_workflow_config_tab <- function(id, initial_steps) {
                     tags$hr(),
                     doc_section_header(
                         "Sample Filtering",
-                        "https://uclouvain-cbio.github.io/QFeaturesGUI/articles/processQFeatures.html#sample-filtering"
+                        "https://uclouvain-cbio.github.io/QFeaturesGUI/articles/processQFeatures.html#samplefeature-filtering"
                     ),
                     tags$p(
                         "Filter your QFeatures object using sample-level metadata",
@@ -67,11 +67,11 @@ interface_module_workflow_config_tab <- function(id, initial_steps) {
                     ),
                     tags$p(
                         "Once filtering is applied, use the PCA preview to inspect",
-                        "the result. When you are satisfied, click \"Save set\"."
+                        "the result. When you are satisfied, click \"Save the processed sets\"."
                     ),
                     doc_section_header(
                         "Feature Filtering",
-                        "https://uclouvain-cbio.github.io/QFeaturesGUI/articles/processQFeatures.html#features-filtering"
+                        "https://uclouvain-cbio.github.io/QFeaturesGUI/articles/processQFeatures.html#samplefeature-filtering"
                     ),
                     tags$p(
                         "Filter your QFeatures object using feature-level metadata",
@@ -79,7 +79,7 @@ interface_module_workflow_config_tab <- function(id, initial_steps) {
                         "features relevant for downstream analysis."
                     ),
                     tags$p(
-                        "Review the result and save the set when the filtering",
+                        "Review the result and save the processed sets when the filtering",
                         "matches your analysis goals."
                     ),
                     doc_section_header(
@@ -96,7 +96,7 @@ interface_module_workflow_config_tab <- function(id, initial_steps) {
                     ),
                     doc_section_header(
                         "Zero to NA",
-                        "https://uclouvain-cbio.github.io/QFeaturesGUI/articles/processQFeatures.html#zeroisna"
+                        "https://uclouvain-cbio.github.io/QFeaturesGUI/articles/processQFeatures.html#zero-to-na"
                     ),
                     tags$p(
                         "Replace all zero intensity values with NA across the",
@@ -104,7 +104,7 @@ interface_module_workflow_config_tab <- function(id, initial_steps) {
                     ),
                     doc_section_header(
                         "Log Transform",
-                        "https://uclouvain-cbio.github.io/QFeaturesGUI/articles/processQFeatures.html#logtransform"
+                        "https://uclouvain-cbio.github.io/QFeaturesGUI/articles/processQFeatures.html#log-transformation"
                     ),
                     tags$p(
                         "Apply a logarithmic transformation with configurable",
@@ -120,7 +120,7 @@ interface_module_workflow_config_tab <- function(id, initial_steps) {
                     ),
                     doc_section_header(
                         "Filtering Missing Values by Samples",
-                        "https://uclouvain-cbio.github.io/QFeaturesGUI/articles/processQFeatures.html#filtering-missing-values"
+                        "https://uclouvain-cbio.github.io/QFeaturesGUI/articles/processQFeatures.html#filtering-missing-values-by-samplesfeatures"
                     ),
                     tags$p(
                         "Define a missing-value threshold and remove samples that",
@@ -132,7 +132,7 @@ interface_module_workflow_config_tab <- function(id, initial_steps) {
                     ),
                     doc_section_header(
                         "Filtering Missing Values by Features",
-                        "https://uclouvain-cbio.github.io/QFeaturesGUI/articles/processQFeatures.html#filtering-missing-values"
+                        "https://uclouvain-cbio.github.io/QFeaturesGUI/articles/processQFeatures.html#filtering-missing-values-by-samplesfeatures"
                     ),
                     tags$p(
                         "This step follows the same logic as sample-level missing",
