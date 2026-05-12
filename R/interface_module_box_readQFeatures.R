@@ -32,8 +32,8 @@ box_readqfeatures_ui <- function(id) {
                     inputId = NS(id, "run_col"),
                     span(
                          bs3Tooltip(
-                           trigger = "Run/Batch column :",
-                           tooltipText =  "For the multi-set case, the column assayData that contains\
+                           trigger = "Run/Batch column:",
+                           tooltipText =  "For the multi-set case, the assayData column that contains\
                            the runs/batches.",
                            placement = "bottom"
                         )
@@ -45,7 +45,7 @@ box_readqfeatures_ui <- function(id) {
                     inputId = NS(id, "quant_cols"),
                     span(
                          bs3Tooltip(
-                            trigger = "Quantitative column :",
+                            trigger = "Quantitative column:",
                             tooltipText = "Only relevant without a colData table. The column(s) of the \
                             assayData that contain the quantitative data.",
                             placement = "bottom"
@@ -71,7 +71,7 @@ box_readqfeatures_ui <- function(id) {
                 ),
                 checkboxInput(
                     inputId = NS(id, "singlecell"),
-                    label = "Single cell data",
+                    label = "Single-cell data",
                     value = FALSE
                 ),
                 disabled(
@@ -122,9 +122,9 @@ box_readqfeatures_ui <- function(id) {
                              class = "load-button",
                              style = "width: 100%;"
                            ),
-                           tooltipText = "Download zip file containing QFeatures object, \
-                           the script used to generate this object and the R sessionInfo\
-                           containing package and version used for the script.",
+                           tooltipText = "Download a zip file containing the QFeatures object, \
+                           the script used to generate this object, and the R sessionInfo \
+                           containing the packages and versions used for the script.",
                            placement = "top"
                          )
                     )    

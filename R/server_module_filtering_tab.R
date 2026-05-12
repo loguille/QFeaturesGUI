@@ -111,7 +111,7 @@ server_module_filtering_tab <- function(id,
                     return(tags$div(
                         class = "alert alert-warning",
                         style = "text-align: center; max-width: 680px; margin: 10px auto;",
-                        "No filtering condition yet. Add at least one filtering box."
+                        "No filtering conditions yet. Add at least one filtering box."
                     ))
                 }
 
@@ -183,7 +183,7 @@ server_module_filtering_tab <- function(id,
         output[[paste0("number_", type, "_removed")]] <- renderInfoBox({
             nb_removed <- number_removed(parent_assays(), processed_assays(), type = type)
             infoBox(
-                paste0("Number of ", type, " removed : "),
+                paste0("Number of ", type, " removed: "),
                 nb_removed,
                 fill = TRUE,
                 color = "light-blue",
@@ -194,7 +194,7 @@ server_module_filtering_tab <- function(id,
         output[[paste0("percent_", type, "_removed")]] <- renderInfoBox({
             pct_removed <- percent_removed(parent_assays(), processed_assays(), type = type)
             infoBox(
-                paste0("Percent of ", type, " removed : "),
+                paste0("Percent of ", type, " removed: "),
                 paste(pct_removed, "%"),
                 fill = TRUE,
                 color = "light-blue",
