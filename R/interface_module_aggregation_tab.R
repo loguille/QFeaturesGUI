@@ -7,7 +7,6 @@
 #' @importFrom shiny fluidRow NS actionButton icon uiOutput textOutput
 #' @importFrom shinydashboardPlus box
 #' @importFrom htmltools tagList h2
-#' @importFrom shinyBS bsTooltip
 #'
 interface_module_aggregation_tab <- function(id) {
     tagList(
