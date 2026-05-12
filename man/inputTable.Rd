@@ -169,6 +169,6 @@ with a blank run. The data is stored as a \code{data.frame}.
 }
 \seealso{
 \code{readSCP()} from the \code{scp} package for an example on how \code{mqScpData} is
-parsed into a \link[QFeatures:QFeatures-class]{QFeatures::QFeatures} object.
+parsed into a \link[QFeatures:QFeatures]{QFeatures} object.
 }
 \keyword{datasets}

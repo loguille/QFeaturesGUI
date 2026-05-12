@@ -83,7 +83,7 @@ server_module_aggregation_tab <- function(id, step_number, step_rv, parent_rv) {
 
         output$pre_boxplot <- renderText({
             if (!clicked()) {
-                "The graph will be displayed once you have done the aggregation."
+                "The graph will be displayed after aggregation."
             } else {}
         })
 

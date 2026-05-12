@@ -477,7 +477,7 @@ annotation_plot_wrapper <- function(annotation,
         layout(
             barmode = "group",
             xaxis = list(title = paste0("Annotation Values (", annotation_name, ")")),
-            yaxis = list(title = "Number of Appearance"),
+            yaxis = list(title = "Number of appearances"),
             title = assay_name
         ) %>%
         config(displaylogo = FALSE, toImageButtonOptions = list(
