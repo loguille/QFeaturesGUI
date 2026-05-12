@@ -11,7 +11,6 @@
 #' @importFrom shinydashboard infoBoxOutput
 #' @importFrom shinydashboardPlus box
 #' @importFrom htmltools tagList
-#' @importFrom shinyBS bsTooltip
 #'
 interface_module_filtering_tab <- function(id, type = c("samples", "features")) {
     type <- match.arg(type)
