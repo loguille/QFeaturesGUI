@@ -8,7 +8,6 @@
 #' @importFrom shiny fluidRow column NS actionButton icon uiOutput textOutput selectInput
 #' @importFrom shinydashboardPlus box
 #' @importFrom htmltools tagList br div tags
-#' @importFrom shinyBS bsTooltip
 #'
 interface_module_impute_tab <- function(id) {
     tagList(
