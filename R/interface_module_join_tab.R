@@ -7,7 +7,6 @@
 #' @importFrom shiny fluidRow NS actionButton icon uiOutput
 #' @importFrom shinydashboardPlus box
 #' @importFrom htmltools tagList h2
-#' @importFrom shinyBS bsTooltip
 #'
 interface_module_join_tab <- function(id) {
   tagList(
