@@ -393,6 +393,7 @@ server_module_annotation_plot <- function(id,
             annotation_values()[condition_mask]
         })
         observe({
+          output$plot <- renderPlotly({
             annotation <- annotation_values()
             filtered <- filtered_annotation()
             selected <- selected_annotation()
@@ -411,6 +412,7 @@ server_module_annotation_plot <- function(id,
             } else {
               selected
             }
+            
             error_handler(
               annotation_plot_wrapper,
               component_name = "annotation_plot (filtering_box)",
@@ -419,25 +421,7 @@ server_module_annotation_plot <- function(id,
               assay_name = plot_title,
               annotation_name = annotation_label
             )
-            output$plot <- renderPlotly({
-                plot_title <- if (type == "samples") {
-                    "All samples across sets"
-                } else {
-                    "All features across sets"
-                }
-                annotation_label <- if (selected_annotation() == rowname_selector_key) {
-                    "Rowname"
-                } else {
-                    selected_annotation()
-                }
-                error_handler(annotation_plot_wrapper,
-                    "annotation_plot (filtering_box)",
-                    annotation = annotation_values(),
-                    filtered_annotation = filtered_annotation(),
-                    assay_name = plot_title,
-                    annotation_name = annotation_label
-                )
-            })
+          })
         })
     })
 }
