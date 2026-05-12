@@ -21,7 +21,7 @@ interface_module_normalisation_tab <- function(id) {
                 inputId = NS(id, "method"),
                 label = bs3Tooltip(
                   "method",
-                  "For more informations on method see online documentation."
+                  "For more information on the method, see online documentation."
                 ),
                 choices = c(
                   "sum",
