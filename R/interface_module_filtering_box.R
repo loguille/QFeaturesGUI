@@ -47,7 +47,6 @@ interface_module_filtering_box <- function(id, box_title, annotation_choices = N
 #' @importFrom shiny NS selectInput actionButton
 #' @importFrom shinydashboardPlus box boxSidebar
 #' @importFrom plotly renderPlotly
-#' @importFrom shinyBS bsAlert
 #'
 interface_module_annotation_plot <- function(id) {
     box(
@@ -60,7 +59,6 @@ interface_module_annotation_plot <- function(id) {
         with_output_waiter(plotlyOutput(NS(id, "plot")),
             html = waiter::spin_6(),
             color = "transparent"
-        ),
-        bsAlert(NS(id, "alert")) # Not working with NS
+        )
     )
 }
