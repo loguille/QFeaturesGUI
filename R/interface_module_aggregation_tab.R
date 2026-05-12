@@ -20,7 +20,7 @@ interface_module_aggregation_tab <- function(id) {
                 selectInput(
                     inputId = NS(id, "method"),
                     label = bs3Tooltip(
-                        trigger = "function to aggregate",
+                        trigger = "Function to aggregate",
                         tooltipText = "See online documentation for more information about methods."
                     ),
                     choices = c(
@@ -36,8 +36,8 @@ interface_module_aggregation_tab <- function(id) {
                 selectInput(
                     inputId = NS(id, "fcol"),
                     bs3Tooltip(
-                        trigger = "rowData variable defining the features of the assay to aggregate",
-                        tooltipText = "Metadata of the assay to aggregate (not sure)."
+                        trigger = "rowData variable defining the assay features to aggregate",
+                        tooltipText = "Metadata of the assay to aggregate."
                     ),
                     choices = NULL
                 ),
