@@ -42,7 +42,6 @@ Imports:
     MsCoreUtils,
     waiter
 Depends:
-    shinyBS,
     R (>= 4.3.0)
 Suggests: 
     knitr,
