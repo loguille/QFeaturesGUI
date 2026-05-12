@@ -33,7 +33,10 @@ interface_module_qc_metrics <- function(id, type) {
                 selectInput(
                     inputId = NS(id, "selected_method"),
                     choices = c("nipals", "ppca", "svdImpute"),
-                    label = "Select Dimension Reduction Method"
+                    label = bs3Tooltip(
+                      trigger = "Select Dimension Reduction Method",
+                      tooltipText = "For more information on the methods, see online documentation."
+                    )
                 ),
                 selectInput(
                   inputId = NS(id, "pca_color"),

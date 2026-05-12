@@ -8,7 +8,6 @@
 #' @importFrom shiny fluidRow column NS actionButton icon uiOutput textOutput selectInput
 #' @importFrom shinydashboardPlus box
 #' @importFrom htmltools tagList br div tags
-#' @importFrom shinyBS bsTooltip
 #'
 interface_module_impute_tab <- function(id) {
     tagList(
@@ -21,7 +20,10 @@ interface_module_impute_tab <- function(id) {
                 collapsible = TRUE,
                 selectInput(
                     inputId = NS(id, "method"),
-                    label = "Imputation method",
+                    label = bs3Tooltip(
+                      "Imputation method",
+                      tooltipText = "For more precision about the method see online documentation"
+                    ),
                     choices = character(0)
                 ),
                 tags$h4("Method documentation"),
@@ -74,21 +76,19 @@ interface_module_impute_tab <- function(id) {
                 )
             )
         ),
-        actionButton(
-            NS(id, "export"),
-            "Save the processed sets",
-            icon("hand-pointer", class = "fa-solid"),
-            width = "100%",
-            class = "load-button"
-        ),
-        shinyBS::bsTooltip(
-            id = NS(id, "export"),
-            title = paste(
+        bs3Tooltip(
+            trigger = actionButton(
+                NS(id, "export"),
+                "Save the processed sets",
+                icon("hand-pointer", class = "fa-solid"),
+                width = "100%",
+                class = "load-button"
+            ),
+            tooltipText = paste(
                 "Write the processed sets to the QFeatures object.",
                 "This is needed to proceed to the next steps.",
                 sep = " "
             ),
-            trigger = "hover",
             placement = "top"
         )
     )

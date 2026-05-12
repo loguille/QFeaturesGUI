@@ -7,7 +7,6 @@
 #' @importFrom shiny fluidRow NS actionButton icon uiOutput
 #' @importFrom shinydashboardPlus box
 #' @importFrom htmltools tagList h2
-#' @importFrom shinyBS bsTooltip
 #'
 interface_module_join_tab <- function(id) {
   tagList(
@@ -25,21 +24,20 @@ interface_module_join_tab <- function(id) {
         NS(id, "output")
       )
     ),
-    actionButton(
-      NS(id, "export"),
-      "Join and save the processed sets",
-      icon("hand-pointer", class = "fa-solid"),
-      width = "100%",
-      class = "load-button"
-    ),
-    shinyBS::bsTooltip(
-      id = NS(id, "export"),
-      title = paste("Write the processed sets to the QFeatures object.",
-                    "This is needed to proceed to the next steps.",
-                    sep = " "
-      ),
-      trigger = "hover",
-      placement = "top"
+    bs3Tooltip(
+        actionButton(
+            NS(id, "export"),
+            "Join and save the processed sets",
+            icon("hand-pointer", class = "fa-solid"),
+            width = "100%",
+            class = "load-button"
+        ),
+        tooltipText = paste(
+            "Join assays and write the processed set to the QFeatures object.",
+            "This is needed to proceed to the next steps.",
+            sep = " "
+        ),
+        placement = "top"
     )
   )
 }
