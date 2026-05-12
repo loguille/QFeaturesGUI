@@ -339,7 +339,6 @@ server_module_filtering_box <- function(id, assays_to_process, type, state) {
 #'
 #' @importFrom shiny moduleServer observe req eventReactive reactive
 #' @importFrom plotly plot_ly renderPlotly
-#' @importFrom shinyBS createAlert closeAlert
 #'
 server_module_annotation_plot <- function(id,
     assays_to_process,
@@ -395,18 +394,7 @@ server_module_annotation_plot <- function(id,
         })
         observe({
             req(annotation_values())
-            if (length(filtered_annotation()) == 0) {
-                createAlert(session,
-                    anchorId = "alert",
-                    alertId = "alert_filter",
-                    title = "Warning",
-                    content = "With the selected filtering parameters, no data will be remaining across all sets.",
-                    append = FALSE,
-                    style = "warning"
-                )
-            } else {
-                closeAlert(session, "alert_filter")
-            }
+            if (length(filtered_annotation()) == 0)
             output$plot <- renderPlotly({
                 plot_title <- if (type == "samples") {
                     "All samples across sets"
