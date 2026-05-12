@@ -20,7 +20,7 @@ interface_module_normalisation_tab <- function(id) {
               selectInput(
                 inputId = NS(id, "method"),
                 label = bs3Tooltip(
-                  "Method",
+                  "Methods",
                   "For more information on the method, see online documentation."
                 ),
                 choices = c(
